@@ -14,7 +14,7 @@ from app.models.patient import Patient
 from app.models.user import User, ClinicStaff, ClinicRole, SystemRole, AuditAction
 from app.models.appointment import Appointment
 from app.models.doctor import DoctorProfile
-from app.models.emr import Encounter, LabReport
+from app.models.emr import Encounter, LabReport, PatientLabReport
 from app.models.prescription import Prescription
 from app.models.unit import HospitalUnit
 from app.models.tenant import Clinic
@@ -487,6 +487,33 @@ async def list_patient_lab_reports(
             d_name = f"Dr. {u.first_name} {u.last_name}"
         setattr(r, "doctor_name", d_name)
         response_items.append(r)
+
+    # Also query PatientLabReport items assigned to this patient
+    plr_stmt = (
+        select(PatientLabReport)
+        .where(PatientLabReport.patient_id == patient_id)
+        .order_by(PatientLabReport.created_at.desc())
+    )
+    plr_res = await db.execute(plr_stmt)
+    plr_reports = plr_res.scalars().all()
+    for plr in plr_reports:
+        mock_r = LabReport(
+            id=plr.id,
+            clinic_id=plr.clinic_id or tenant.clinic_id,
+            patient_id=plr.patient_id,
+            test_name=plr.test_name,
+            test_category=plr.test_code or "Diagnostic Test",
+            test_date=plr.created_at.date() if plr.created_at else date.today(),
+            result_summary=plr.result_summary or f"Order {plr.order_code} - Status: {plr.status}",
+            report_file_url=plr.report_file_url,
+            status=plr.status,
+            lab_name="Metro Diagnostic Laboratory",
+            pathologist_name=plr.ordered_by_doctor or "Clinical Lab",
+            notes=f"Order: {plr.order_code}",
+        )
+        setattr(mock_r, "doctor_name", plr.ordered_by_doctor or "Attending Physician")
+        setattr(mock_r, "created_at", plr.created_at or datetime.now())
+        response_items.append(mock_r)
 
     return response_items
 

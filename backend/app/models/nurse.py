@@ -42,10 +42,13 @@ class NurseProfile(Base, UUIDPrimaryKeyMixin, TenantMixin, TimestampMixin):
     service_fee_bdt: Mapped[float] = mapped_column(Numeric(12, 2), default=1200.00, nullable=False)
     bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_available: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    average_rating: Mapped[float] = mapped_column(Numeric(3, 1), default=0.0, nullable=False)
+    total_reviews: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Relationships
     user = relationship("User", foreign_keys=[user_id])
     bookings: Mapped[List["NurseBooking"]] = relationship("NurseBooking", back_populates="nurse", cascade="all, delete-orphan")
+    reviews: Mapped[List["NurseReview"]] = relationship("NurseReview", back_populates="nurse", cascade="all, delete-orphan")
 
 
 class NurseBooking(Base, UUIDPrimaryKeyMixin, TenantMixin, TimestampMixin):
@@ -103,3 +106,40 @@ class NurseBooking(Base, UUIDPrimaryKeyMixin, TenantMixin, TimestampMixin):
     patient = relationship("Patient", foreign_keys=[patient_id])
     invoice = relationship("Invoice", foreign_keys=[invoice_id])
     overtime_invoice = relationship("Invoice", foreign_keys=[overtime_invoice_id])
+    review: Mapped[Optional["NurseReview"]] = relationship("NurseReview", back_populates="booking", uselist=False, cascade="all, delete-orphan")
+
+
+class NurseReview(Base, UUIDPrimaryKeyMixin, TenantMixin, TimestampMixin):
+    """
+    Patient rating and feedback for a completed nurse care service.
+    """
+    __tablename__ = "nurse_reviews"
+
+    booking_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("nurse_bookings.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+    nurse_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("nurse_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("patients.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    patient_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    rating: Mapped[int] = mapped_column(Integer, nullable=False, comment="1 to 5 star rating")
+    comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Relationships
+    booking = relationship("NurseBooking", back_populates="review")
+    nurse = relationship("NurseProfile", back_populates="reviews")
+    patient = relationship("Patient", foreign_keys=[patient_id])
+

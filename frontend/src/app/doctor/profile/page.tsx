@@ -177,6 +177,7 @@ export default function DoctorProfilePage() {
       const updated = await res.json();
       if (typeof window !== "undefined" && updated.user) {
         localStorage.setItem("user_info", JSON.stringify(updated.user));
+        localStorage.setItem("user", JSON.stringify(updated.user));
       }
       setSuccessMessage("Doctor profile and clinical credentials updated successfully!");
     } catch (err: any) {
@@ -202,8 +203,8 @@ export default function DoctorProfilePage() {
         <div className="flex items-center gap-3">
           <BackButton fallbackHref="/dashboard/doctor" />
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Physician Profile & Credentials</h1>
-            <p className="text-xs text-slate-500">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Physician Profile & Credentials</h1>
+            <p className="text-sm text-slate-600 mt-0.5">
               Manage professional certifications, consultation fees (৳), and prescription signatures
             </p>
           </div>

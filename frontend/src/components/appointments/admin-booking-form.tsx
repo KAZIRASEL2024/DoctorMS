@@ -481,52 +481,52 @@ export const AdminBookingForm: React.FC = () => {
         {/* Confirmation Details Card */}
         <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl text-left grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <div>
-            <span className="text-slate-400 block text-[11px] font-semibold uppercase">
+            <span className="text-slate-500 block text-[11px] font-semibold uppercase">
               Appointment Reference
             </span>
-            <span className="text-sm font-mono font-bold text-slate-900">
+            <span className="text-sm font-bold text-slate-900 tabular-nums">
               {bookingSuccess.appointment_number}
             </span>
           </div>
 
           <div>
-            <span className="text-slate-400 block text-[11px] font-semibold uppercase">
+            <span className="text-slate-500 block text-[11px] font-semibold uppercase">
               Assigned Queue Serial
             </span>
-            <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block">
+            <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block tabular-nums">
               {bookingSuccess.serial_code || `Serial #${bookingSuccess.serial_number || 1}`}
             </span>
           </div>
 
           <div>
-            <span className="text-slate-400 block text-[11px] font-semibold uppercase">
+            <span className="text-slate-500 block text-[11px] font-semibold uppercase">
               Patient Name & MRN
             </span>
             <span className="text-sm font-semibold text-slate-900 block">
               {bookingSuccess.patient_name}
             </span>
-            <span className="text-[11px] text-slate-500 font-mono">
+            <span className="text-[11px] text-slate-600 tabular-nums">
               MRN: {bookingSuccess.patient_mrn || "N/A"}
             </span>
           </div>
 
           <div>
-            <span className="text-slate-400 block text-[11px] font-semibold uppercase">
+            <span className="text-slate-500 block text-[11px] font-semibold uppercase">
               Consulting Physician
             </span>
             <span className="text-sm font-semibold text-slate-900 block">
               {bookingSuccess.doctor_name}
             </span>
-            <span className="text-[11px] text-slate-500">
+            <span className="text-[11px] text-slate-600">
               {bookingSuccess.doctor_specialty || "Specialist"}
             </span>
           </div>
 
           <div>
-            <span className="text-slate-400 block text-[11px] font-semibold uppercase">
+            <span className="text-slate-500 block text-[11px] font-semibold uppercase">
               Consultation Schedule
             </span>
-            <span className="text-xs font-semibold text-slate-800">
+            <span className="text-xs font-semibold text-slate-900 tabular-nums">
               {bookingSuccess.start_time
                 ? new Date(bookingSuccess.start_time).toLocaleDateString(undefined, {
                     weekday: "short",
@@ -536,7 +536,7 @@ export const AdminBookingForm: React.FC = () => {
                   })
                 : "Today"}
             </span>
-            <span className="text-[11px] text-slate-500 block">
+            <span className="text-[11px] text-slate-600 block tabular-nums">
               {bookingSuccess.start_time
                 ? new Date(bookingSuccess.start_time).toLocaleTimeString([], {
                     hour: "2-digit",
@@ -554,10 +554,10 @@ export const AdminBookingForm: React.FC = () => {
           </div>
 
           <div>
-            <span className="text-slate-400 block text-[11px] font-semibold uppercase">
+            <span className="text-slate-500 block text-[11px] font-semibold uppercase">
               Chamber Location
             </span>
-            <span className="text-xs font-semibold text-slate-800">
+            <span className="text-xs font-semibold text-slate-900">
               {bookingSuccess.chamber_location || "Room 101, Main Building"}
             </span>
           </div>

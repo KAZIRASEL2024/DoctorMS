@@ -13,6 +13,21 @@ interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
 }
 
+let isRedirectingToLogin = false;
+
+const isPublicRoute = (rawUrl: string) => {
+  const lower = rawUrl.toLowerCase();
+  return (
+    lower.includes("/public") ||
+    lower.includes("/settings/public") ||
+    lower.includes("/auth/login") ||
+    lower.includes("/auth/register") ||
+    lower.includes("/auth/patient-register") ||
+    lower.includes("/cms") ||
+    lower.includes("/specialties")
+  );
+};
+
 export async function apiClient<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const baseUrl = getBaseUrl();
   const cleanEndpoint = endpoint.replace(/^\/?api\/v1\/?/, "/");
@@ -30,7 +45,9 @@ export async function apiClient<T>(endpoint: string, options: FetchOptions = {})
     }
   }
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const token = typeof window !== "undefined"
+    ? (localStorage.getItem("access_token") || localStorage.getItem("token"))
+    : null;
   const activeClinicId = typeof window !== "undefined" ? localStorage.getItem("active_clinic_id") : null;
 
   const headers: Record<string, string> = {
@@ -52,13 +69,38 @@ export async function apiClient<T>(endpoint: string, options: FetchOptions = {})
   });
 
   if (response.status === 401 && typeof window !== "undefined") {
-    // Clear credentials and redirect to login
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    if (!window.location.pathname.includes("/login")) {
-      window.location.href = "/login";
+    const isPublic = isPublicRoute(url);
+    // Only clean session if an actual token was transmitted on a protected route
+    if (token && !isPublic) {
+      if (!isRedirectingToLogin && !window.location.pathname.startsWith("/login")) {
+        isRedirectingToLogin = true;
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user_info");
+        localStorage.removeItem("user");
+        localStorage.removeItem("active_clinic_id");
+
+        const currentPath = window.location.pathname + window.location.search;
+        const redirectParam = currentPath && currentPath !== "/" ? `?redirect=${encodeURIComponent(currentPath)}` : "";
+        window.location.href = `/login${redirectParam}`;
+      }
     }
-    throw new Error("Session expired. Please log in again.");
+    throw new Error("Session expired or unauthorized. Please log in again.");
+  }
+
+  if (response.status === 403) {
+    // 403 Forbidden: NEVER clear localStorage or redirect! Only report permission error.
+    let permissionMsg = "You do not have permission to access this resource.";
+    try {
+      const errorData = await response.json();
+      if (typeof errorData.detail === "string") {
+        permissionMsg = errorData.detail;
+      } else if (errorData.message) {
+        permissionMsg = errorData.message;
+      }
+    } catch {}
+    throw new Error(permissionMsg);
   }
 
   if (!response.ok) {

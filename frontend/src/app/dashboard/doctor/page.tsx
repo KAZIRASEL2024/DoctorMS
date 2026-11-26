@@ -330,8 +330,8 @@ export default function DoctorDashboard() {
           <span className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
             Clinical Practice Portal
           </span>
-          <h1 className="text-2xl font-bold mt-1">Doctor Consultation Workspace</h1>
-          <p className="text-xs text-slate-300 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1">Doctor Consultation Workspace</h1>
+          <p className="text-sm text-slate-200 mt-1">
             Review appointments, record vitals, write electronic prescriptions, and assign hospital wards/cabins in real-time.
           </p>
         </div>
@@ -362,8 +362,8 @@ export default function DoctorDashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Waiting in Queue</span>
-            <div className="text-3xl font-bold text-slate-900 mt-1">{waitingInQueue}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">Scheduled, checked-in & active</p>
+            <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">{waitingInQueue}</div>
+            <p className="text-[11px] text-slate-500 mt-0.5">Scheduled, checked-in & active</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60">
             <Clock className="w-6 h-6" />
@@ -373,8 +373,8 @@ export default function DoctorDashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Consulted Today</span>
-            <div className="text-3xl font-bold text-slate-900 mt-1">{completedToday}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">Completed consultations</p>
+            <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">{completedToday}</div>
+            <p className="text-[11px] text-slate-500 mt-0.5">Completed consultations</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60">
             <CheckCircle className="w-6 h-6" />
@@ -384,8 +384,8 @@ export default function DoctorDashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Today</span>
-            <div className="text-3xl font-bold text-slate-900 mt-1">{todayAppointments.length}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">Booked for today</p>
+            <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">{todayAppointments.length}</div>
+            <p className="text-[11px] text-slate-500 mt-0.5">Booked for today</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60">
             <Calendar className="w-6 h-6" />

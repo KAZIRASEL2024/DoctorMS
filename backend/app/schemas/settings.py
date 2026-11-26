@@ -15,6 +15,12 @@ class WebsiteSettingsUpdate(BaseModel):
     hero_subtitle: Optional[str] = None
     logo_url: Optional[str] = None
     hero_image_url: Optional[str] = None
+    theme_preset: Optional[str] = None
+    primary_color: Optional[str] = None
+    button_color: Optional[str] = None
+    tint_color: Optional[str] = None
+    background_color: Optional[str] = None
+    text_color: Optional[str] = None
 
 
 class WebsiteSettingsResponse(BaseModel):
@@ -29,6 +35,12 @@ class WebsiteSettingsResponse(BaseModel):
     hero_subtitle: str
     logo_url: Optional[str] = None
     hero_image_url: Optional[str] = None
+    theme_preset: str = "signature-green"
+    primary_color: str = "#059669"
+    button_color: str = "#047857"
+    tint_color: str = "#ECFDF5"
+    background_color: str = "#FFFFFF"
+    text_color: str = "#0F172A"
     updated_at: datetime
 
     class Config:

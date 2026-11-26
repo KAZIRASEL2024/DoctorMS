@@ -16,6 +16,7 @@ import {
   FileText,
   Activity,
   LogIn,
+  FlaskConical,
 } from "lucide-react";
 
 interface WebsiteSettings {
@@ -68,7 +69,7 @@ export const PublicNavbar: React.FC<PublicNavbarProps> = ({ settings: propSettin
                 <span className="font-bold text-sm sm:text-lg text-slate-900 tracking-tight leading-tight block truncate max-w-[170px] sm:max-w-[280px]">
                   {hospitalName || "Mir Health"}
                 </span>
-                <span className="text-[10px] sm:text-xs text-slate-500 font-medium leading-none block truncate max-w-[170px] sm:max-w-[280px]">
+                <span className="text-[10px] sm:text-xs text-slate-600 font-medium leading-none block truncate max-w-[170px] sm:max-w-[280px]">
                   {tagline || "Smart EMR & Patient Management"}
                 </span>
               </div>
@@ -89,8 +90,11 @@ export const PublicNavbar: React.FC<PublicNavbarProps> = ({ settings: propSettin
             >
               Nurses
             </Link>
-            <Link href="/#features" className="hover:text-emerald-600 transition">
-              Digital EMR
+            <Link
+              href="/lab-facilities"
+              className={`hover:text-emerald-600 transition ${pathname === "/lab-facilities" ? "text-emerald-600 font-bold" : ""}`}
+            >
+              Lab Facilities
             </Link>
             <Link
               href="/queue/display"
@@ -183,11 +187,10 @@ export const PublicNavbar: React.FC<PublicNavbarProps> = ({ settings: propSettin
                 <Link
                   href="/specialties"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition min-h-[44px] ${
-                    pathname === "/specialties"
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                  }`}
+                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition min-h-[44px] ${pathname === "/specialties"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
                 >
                   <Activity className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Specialties</span>
@@ -196,23 +199,26 @@ export const PublicNavbar: React.FC<PublicNavbarProps> = ({ settings: propSettin
                 <Link
                   href="/nurses"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition min-h-[44px] ${
-                    pathname === "/nurses"
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                  }`}
+                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition min-h-[44px] ${pathname === "/nurses"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
                 >
                   <Users className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Nurses</span>
                 </Link>
 
                 <Link
-                  href="/#features"
+                  href="/lab-facilities"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition min-h-[44px]"
+                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition min-h-[44px] ${
+                    pathname === "/lab-facilities"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
                 >
-                  <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Digital EMR</span>
+                  <FlaskConical className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Lab Facilities</span>
                 </Link>
 
                 <Link

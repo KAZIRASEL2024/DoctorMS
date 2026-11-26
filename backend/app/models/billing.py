@@ -98,6 +98,12 @@ class Invoice(Base, UUIDPrimaryKeyMixin, TenantMixin, TimestampMixin):
         nullable=True,
         index=True
     )
+    nurse_booking_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("nurse_bookings.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
     bill_type: Mapped[Optional[str]] = mapped_column(String(50), default="Doctor Visit", nullable=True, index=True)
     description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     amount_bdt: Mapped[float] = mapped_column(Numeric(12, 2), default=0.00, nullable=True)

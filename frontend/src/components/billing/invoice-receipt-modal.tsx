@@ -122,6 +122,8 @@ export function InvoiceReceiptModal({
             border: none !important;
             box-shadow: none !important;
             background: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .no-print {
             display: none !important;
@@ -210,20 +212,20 @@ export function InvoiceReceiptModal({
                     <span>Patient Information</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Full Name:</span>
+                    <span className="text-slate-600 font-medium">Full Name:</span>
                     <span className="font-semibold text-slate-900">{invoice.patient_name || "Patient"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Hospital MRN:</span>
-                    <span className="font-mono font-bold text-slate-900">{invoice.patient_mrn || "MRN-N/A"}</span>
+                    <span className="text-slate-600 font-medium">Hospital MRN:</span>
+                    <span className="tabular-nums font-bold text-slate-900">{invoice.patient_mrn || "MRN-N/A"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Contact Phone:</span>
-                    <span className="text-slate-800">{invoice.patient_phone || "Not provided"}</span>
+                    <span className="text-slate-600 font-medium">Contact Phone:</span>
+                    <span className="text-slate-900 tabular-nums">{invoice.patient_phone || "Not provided"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Address:</span>
-                    <span className="text-slate-800 text-right">{invoice.patient_address || "Registered Address"}</span>
+                    <span className="text-slate-600 font-medium">Address:</span>
+                    <span className="text-slate-900 text-right">{invoice.patient_address || "Registered Address"}</span>
                   </div>
                 </div>
 

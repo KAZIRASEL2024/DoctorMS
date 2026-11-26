@@ -113,12 +113,30 @@ class SimplePDFCanvas:
         return header + body + xref + trailer
 
 
+def hex_to_rgb_normalized(hex_str: str, default=(0.06, 0.25, 0.48)):
+    try:
+        h = str(hex_str).lstrip("#")
+        if len(h) == 6:
+            return (int(h[0:2], 16) / 255.0, int(h[2:4], 16) / 255.0, int(h[4:6], 16) / 255.0)
+    except Exception:
+        pass
+    return default
+
+
 def build_prescription_pdf(rx: Dict[str, Any]) -> bytes:
     """Generates official clinical A4 E-Prescription PDF binary with full hospital letterhead & verification matrix."""
     pdf = SimplePDFCanvas(595, 842)
 
+    primary_hex = rx.get("primary_color", "#059669")
+    header_fill = hex_to_rgb_normalized(primary_hex, default=(0.06, 0.25, 0.48))
+    badge_fill = (
+        min(1.0, header_fill[0] * 1.15 + 0.05),
+        min(1.0, header_fill[1] * 1.15 + 0.05),
+        min(1.0, header_fill[2] * 1.15 + 0.05),
+    )
+
     # 1. Hospital Header Banner (y = 740 to 824)
-    pdf.rect(25, 740, 545, 84, stroke=False, fill_color=(0.06, 0.25, 0.48))
+    pdf.rect(25, 740, 545, 84, stroke=False, fill_color=header_fill)
     pdf.set_text_color(1.0, 1.0, 1.0)
     pdf.set_font("/F2", 17)
     pdf.text(38, 796, rx.get("clinic_name", "METRO HEALTH POLYCLINIC").upper())
@@ -130,7 +148,7 @@ def build_prescription_pdf(rx: Dict[str, Any]) -> bytes:
     pdf.text(38, 755, f"Email: {rx.get('clinic_email', 'care@metrohealth.com')} | 24/7 Emergency Ambulance: 10678")
 
     # Header Right Badge Box
-    pdf.rect(410, 748, 150, 68, stroke=False, fill_color=(0.12, 0.35, 0.62))
+    pdf.rect(410, 748, 150, 68, stroke=False, fill_color=badge_fill)
     pdf.set_text_color(1.0, 1.0, 1.0)
     pdf.set_font("/F2", 9)
     pdf.text(420, 796, "E-PRESCRIPTION")
@@ -350,20 +368,21 @@ def build_prescription_html(rx: Dict[str, Any]) -> str:
     """Generates print-ready responsive HTML with styling & letterhead for browser window.print()."""
     doc_raw = str(rx.get('doctor_name', 'Doctor')).strip()
     doc_title = doc_raw if doc_raw.lower().startswith(('dr.', 'dr ', 'prof.', 'prof ')) else f"Dr. {doc_raw}"
+    primary_color = rx.get("primary_color", "#059669")
 
     v = rx.get("vitals") or {}
     items_rows = "".join([
         f"""<tr class="border-b border-slate-100 text-xs hover:bg-slate-50/50">
             <td class="py-2.5 px-3 font-semibold text-slate-800">
-              <span class="font-bold text-sky-700 mr-1.5">{i+1}.</span>
-              {item.get('medicine_name')}
-              {f'<span class="block text-[10px] text-slate-400 font-normal">({item.get("generic_name")})</span>' if item.get("generic_name") else ''}
+                <span class="font-bold mr-1.5" style="color: {primary_color};">{i+1}.</span>
+                {item.get('medicine_name')}
+                {f'<span class="block text-[10px] text-slate-400 font-normal">({item.get("generic_name")})</span>' if item.get("generic_name") else ''}
             </td>
-            <td class="py-2.5 px-3 font-mono font-bold text-sky-800">{item.get('dosage')}</td>
+            <td class="py-2.5 px-3 font-mono font-bold" style="color: {primary_color};">{item.get('dosage')}</td>
             <td class="py-2.5 px-3 font-medium text-slate-700">{item.get('duration')}</td>
             <td class="py-2.5 px-3 font-medium text-slate-800">
-              {item.get('meal_timing')}
-              {f'<span class="block text-[10px] text-slate-500 font-normal mt-0.5">{item.get("instructions")}</span>' if item.get("instructions") else ''}
+                {item.get('meal_timing')}
+                {f'<span class="block text-[10px] text-slate-500 font-normal mt-0.5">{item.get("instructions")}</span>' if item.get("instructions") else ''}
             </td>
         </tr>"""
         for i, item in enumerate(rx.get("items", []))
@@ -388,11 +407,11 @@ def build_prescription_html(rx: Dict[str, Any]) -> str:
   <!-- Top Bar for actions -->
   <div class="no-print max-w-4xl mx-auto mb-4 flex items-center justify-between gap-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
     <div class="flex items-center gap-2">
-      <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span class="w-3 h-3 rounded-full animate-pulse" style="background-color: {primary_color};"></span>
       <span class="text-xs font-semibold text-slate-700">Official Clinical Letterhead Prescription</span>
     </div>
     <div class="flex items-center gap-3">
-      <button onclick="window.print()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-2 transition cursor-pointer">
+      <button onclick="window.print()" class="px-4 py-2 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-2 transition cursor-pointer" style="background-color: {primary_color};">
         🖨️ Print Prescription / Save A4 PDF
       </button>
       <a href="/api/v1/prescriptions/{rx.get('id')}/pdf" download="{rx.get('prescription_code')}.pdf" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-2 transition">
@@ -403,10 +422,10 @@ def build_prescription_html(rx: Dict[str, Any]) -> str:
 
   <div class="page-container max-w-4xl mx-auto bg-white border border-slate-200 shadow-xl rounded-2xl p-8 relative">
     <!-- Hospital Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b-2 border-sky-600">
+    <div class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b-2" style="border-color: {primary_color};">
       <div class="space-y-1">
         <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold text-lg">✚</div>
+          <div class="w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-lg" style="background-color: {primary_color};">✚</div>
           <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">{rx.get('clinic_name', 'Metro Health Polyclinic')}</h1>
         </div>
         <p class="text-xs font-medium text-sky-800">Multi-Specialty Hospital, Tertiary Care Complex & Advanced Diagnostics</p>

@@ -55,6 +55,24 @@ def format_user_response(user: User) -> UserResponse:
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(request: RegisterUserRequest, db: AsyncSession = Depends(get_db)):
     """Registers a new base user account."""
+    import re
+
+    if request.phone:
+        phone_clean = re.sub(r"\D", "", request.phone.strip())
+        if not re.match(r"^01\d{9}$", phone_clean):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone number must start with 01 and be exactly 11 digits (e.g., 01712345678)"
+            )
+        request.phone = phone_clean
+
+    pw = request.password
+    if not (6 <= len(pw) <= 32 and re.search(r"[A-Za-z]", pw) and re.search(r"\d", pw) and re.search(r"[^A-Za-z0-9]", pw)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be 6–32 characters and include at least 1 letter, 1 number, and 1 special character"
+        )
+
     existing_stmt = select(User).where(User.email == request.email)
     existing_res = await db.execute(existing_stmt)
     if existing_res.scalar_one_or_none():
@@ -201,6 +219,22 @@ async def patient_register(request: PatientSelfRegisterRequest, db: AsyncSession
     """Registers a new patient account and automatically returns JWT session."""
     import datetime
     import random
+    import re
+
+    phone_clean = re.sub(r"\D", "", (request.phone or "").strip())
+    if not re.match(r"^01\d{9}$", phone_clean):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Phone number must start with 01 and be exactly 11 digits (e.g., 01712345678)"
+        )
+    request.phone = phone_clean
+
+    pw = request.password
+    if not (6 <= len(pw) <= 32 and re.search(r"[A-Za-z]", pw) and re.search(r"\d", pw) and re.search(r"[^A-Za-z0-9]", pw)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be 6–32 characters and include at least 1 letter, 1 number, and 1 special character"
+        )
 
     existing_stmt = select(User).where(User.email == request.email)
     existing_res = await db.execute(existing_stmt)

@@ -1,5 +1,34 @@
-export type SystemRole = 'SUPER_ADMIN' | 'STAFF' | 'PATIENT' | 'NURSE';
-export type ClinicRole = 'CLINIC_ADMIN' | 'DOCTOR' | 'RECEPTIONIST' | 'NURSE';
+export type SystemRole =
+  | 'SUPER_ADMIN'
+  | 'ADMIN'
+  | 'DOCTOR'
+  | 'NURSE'
+  | 'RECEPTIONIST'
+  | 'LAB_ASSISTANT'
+  | 'STAFF'
+  | 'PATIENT'
+  | string;
+
+export type ClinicRole =
+  | 'CLINIC_ADMIN'
+  | 'DOCTOR'
+  | 'RECEPTIONIST'
+  | 'NURSE'
+  | 'LAB_ASSISTANT'
+  | 'STAFF'
+  | string;
+
+export type UserRole =
+  | 'SUPER_ADMIN'
+  | 'ADMIN'
+  | 'DOCTOR'
+  | 'NURSE'
+  | 'RECEPTIONIST'
+  | 'LAB_ASSISTANT'
+  | 'STAFF'
+  | 'PATIENT'
+  | 'CLINIC_ADMIN'
+  | string;
 
 export interface NurseProfile {
   id: string;
@@ -16,6 +45,8 @@ export interface NurseProfile {
   hourly_rate_bdt?: number;
   bio?: string;
   is_available: boolean;
+  average_rating?: number;
+  total_reviews?: number;
 }
 
 export interface NurseBooking {
@@ -49,6 +80,9 @@ export interface NurseBooking {
   overtime_due_bdt?: number;
   overtime_invoice_id?: string | null;
   overtime_invoice_number?: string | null;
+  has_reviewed?: boolean;
+  submitted_rating?: number;
+  submitted_comment?: string;
 }
 
 export interface ClinicMembership {
@@ -66,8 +100,9 @@ export interface User {
   first_name: string;
   last_name: string;
   phone?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   system_role: SystemRole;
+  role?: UserRole;
   is_active: boolean;
   clinic_memberships: ClinicMembership[];
   created_at: string;

@@ -105,13 +105,13 @@ export function LiveDutyTimer({ booking, onEndDuty, isEnding }: LiveDutyTimerPro
 
           {/* Large Digital Clock Display */}
           <div className="flex items-baseline gap-2">
-            <div className="font-mono text-3xl sm:text-5xl font-black tracking-tight text-white flex items-center gap-1">
+            <div className="text-3xl sm:text-5xl font-black tracking-tight text-white flex items-center gap-1 tabular-nums">
               <span className="bg-white/10 px-2 py-1 rounded-xl">{formattedHours}h</span>
               <span className="text-emerald-400 animate-pulse">:</span>
               <span className="bg-white/10 px-2 py-1 rounded-xl">{formattedMinutes}m</span>
               <span className="text-emerald-400 animate-pulse">:</span>
               <span
-                className={`px-2 py-1 rounded-xl ${
+                className={`px-2 py-1 rounded-xl tabular-nums ${
                   isOvertime ? "bg-amber-500/30 text-amber-300" : "bg-emerald-500/30 text-emerald-300"
                 }`}
               >

@@ -257,3 +257,92 @@ class LabReport(Base, UUIDPrimaryKeyMixin, TenantMixin, TimestampMixin):
     __table_args__ = (
         Index("ix_lab_reports_patient_lookup", "clinic_id", "patient_id", "test_date"),
     )
+
+
+class LabTest(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """
+    Hospital diagnostic laboratory test catalog item (Lab Facilities).
+    Defines test name, department category, sample type, pricing in BDT, and report turnaround time.
+    """
+    __tablename__ = "lab_tests"
+
+    clinic_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("clinics.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True
+    )
+    test_code: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    test_name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String(100), nullable=False, default="Pathology", index=True)
+    sample_type: Mapped[str] = mapped_column(String(100), nullable=False, default="Blood")
+    price_bdt: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=500.0)
+    report_delivery_time: Mapped[str] = mapped_column(String(100), nullable=False, default="Same Day (4 Hours)")
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Relationships
+    clinic: Mapped[Optional["Clinic"]] = relationship("Clinic")
+
+    __table_args__ = (
+        Index("ix_lab_tests_category_active", "category", "is_active"),
+        Index("ix_lab_tests_code", "test_code"),
+    )
+
+
+class PatientLabReport(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """
+    Patient diagnostic lab test order & report record.
+    Tracks test assignment, sample collection, processing status, clinical findings,
+    associated billing invoice, and downloadable PDF report.
+    """
+    __tablename__ = "patient_lab_reports"
+
+    clinic_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("clinics.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True
+    )
+    order_code: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("patients.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    patient_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    patient_mrn: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)
+    lab_test_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("lab_tests.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+    test_name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    test_code: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    fee_bdt: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0.0)
+    ordered_by_doctor: Mapped[Optional[str]] = mapped_column(String(200), default="Attending Physician", nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="Sample Collected", nullable=False, index=True)
+    result_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    report_file_url: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    invoice_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("invoices.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
+    # Relationships
+    clinic: Mapped[Optional["Clinic"]] = relationship("Clinic")
+    patient: Mapped["Patient"] = relationship("Patient")
+    lab_test: Mapped[Optional["LabTest"]] = relationship("LabTest")
+    invoice: Mapped[Optional["Invoice"]] = relationship("Invoice")
+
+    __table_args__ = (
+        Index("ix_patient_lab_reports_status", "status"),
+        Index("ix_patient_lab_reports_patient", "patient_id", "created_at"),
+        Index("ix_patient_lab_reports_order_code", "order_code"),
+    )
+
+

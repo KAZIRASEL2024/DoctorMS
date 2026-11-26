@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useBranding } from "@/lib/branding-context";
-import { LogOut, Building, ShieldCheck, User as UserIcon, PhoneCall, Menu } from "lucide-react";
+import { LogOut, Building, ShieldCheck, User as UserIcon, PhoneCall, Menu, Pin } from "lucide-react";
 
 export const Navbar: React.FC = () => {
   const { user, activeMembership, currentRole, switchClinic, logout } = useAuth();
-  const { toggle } = useSidebar();
+  const { toggle, isPinned, togglePin } = useSidebar();
   const { settings, isLoading } = useBranding();
 
   const profileHref =
@@ -18,13 +18,13 @@ export const Navbar: React.FC = () => {
       : currentRole === "DOCTOR"
       ? "/doctor/profile"
       : currentRole === "SUPER_ADMIN"
-      ? "/admin/website-settings"
+      ? "/dashboard/admin/profile"
       : "/dashboard/settings";
 
   return (
     <header className="h-14 sm:h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-        {/* Mobile Hamburger Drawer Toggle */}
+        {/* Mobile Hamburger Drawer Toggle (< lg) */}
         <button
           type="button"
           onClick={toggle}
@@ -32,6 +32,21 @@ export const Navbar: React.FC = () => {
           aria-label="Toggle navigation menu"
         >
           <Menu className="w-5 h-5" />
+        </button>
+
+        {/* Desktop Sidebar Pin / Rail Toggle (lg+) */}
+        <button
+          type="button"
+          onClick={togglePin}
+          className={`hidden lg:flex p-2 rounded-lg transition items-center justify-center border ${
+            isPinned
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+              : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 border-slate-200"
+          }`}
+          title={isPinned ? "Unpin sidebar (collapse to hover-rail)" : "Pin sidebar open"}
+          aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+        >
+          <Pin className={`w-4 h-4 transition-transform ${isPinned ? "rotate-45 text-emerald-600" : "text-slate-500"}`} />
         </button>
 
         {/* Dynamic Hospital / Clinic Branding */}
@@ -47,7 +62,7 @@ export const Navbar: React.FC = () => {
               <Building className="w-4 h-4" />
             </div>
           )}
-          <span className="font-bold text-slate-800 text-xs sm:text-sm truncate max-w-[130px] sm:max-w-[200px]">
+          <span className="font-bold text-slate-900 text-xs sm:text-sm truncate max-w-[130px] sm:max-w-[200px]">
             {settings?.hospital_name || activeMembership?.clinic_name || "Mir Health"}
           </span>
         </Link>
@@ -105,10 +120,10 @@ export const Navbar: React.FC = () => {
             )}
           </div>
           <div className="hidden md:block text-left">
-            <div className="text-xs font-semibold text-slate-800 leading-tight">
+            <div className="text-xs font-bold text-slate-900 leading-tight">
               {user ? `${user.first_name} ${user.last_name}` : "User"}
             </div>
-            <div className="text-[11px] text-slate-500 leading-tight truncate max-w-[140px]">
+            <div className="text-[11px] text-slate-600 leading-tight truncate max-w-[140px]">
               {user?.email}
             </div>
           </div>

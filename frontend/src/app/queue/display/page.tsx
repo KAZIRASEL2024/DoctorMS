@@ -66,7 +66,7 @@ export default function TVDisplayPage() {
         </div>
 
         <div className="text-right">
-          <div className="text-3xl font-mono font-bold tracking-tight text-slate-100">
+          <div className="text-3xl font-bold tracking-tight text-white tabular-nums">
             {currentTime}
           </div>
           <div className="text-xs font-semibold text-slate-400 uppercase">Live Clinic Feed</div>
@@ -99,7 +99,7 @@ export default function TVDisplayPage() {
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
                       Token Number
                     </div>
-                    <div className="text-5xl font-mono font-black text-emerald-400 tracking-tight">
+                    <div className="text-5xl font-black text-emerald-400 tracking-tight tabular-nums">
                       {item.token_code}
                     </div>
                     <div className="mt-4 pt-4 border-t border-slate-700/60">
@@ -138,10 +138,10 @@ export default function TVDisplayPage() {
                   className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-5 py-3.5 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-4">
-                    <span className="text-xs font-mono font-bold text-slate-500">
+                    <span className="text-xs font-bold text-slate-400 tabular-nums">
                       #{index + 1}
                     </span>
-                    <span className="text-2xl font-mono font-black text-slate-100">
+                    <span className="text-2xl font-black text-white tabular-nums">
                       {item.token_code}
                     </span>
                   </div>

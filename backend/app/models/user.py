@@ -3,7 +3,7 @@ import enum
 import uuid
 from typing import Optional, List
 from datetime import datetime
-from sqlalchemy import String, Boolean, Enum as SAEnum, ForeignKey, Index, DateTime, func
+from sqlalchemy import String, Text, Boolean, Enum as SAEnum, ForeignKey, Index, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,6 +16,7 @@ class SystemRole(str, enum.Enum):
     STAFF = "STAFF"
     PATIENT = "PATIENT"
     NURSE = "NURSE"
+    LAB_ASSISTANT = "LAB_ASSISTANT"
 
 
 class ClinicRole(str, enum.Enum):
@@ -24,6 +25,7 @@ class ClinicRole(str, enum.Enum):
     DOCTOR = "DOCTOR"
     RECEPTIONIST = "RECEPTIONIST"
     NURSE = "NURSE"
+    LAB_ASSISTANT = "LAB_ASSISTANT"
 
 
 class AuditAction(str, enum.Enum):
@@ -160,6 +162,11 @@ class AuditLog(Base, UUIDPrimaryKeyMixin):
     )
     ip_address: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     user_agent: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    actor_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    actor_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    actor_role: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    action_title: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     payload_diff: Mapped[Optional[dict]] = mapped_column(
         JSONB,
         nullable=True,

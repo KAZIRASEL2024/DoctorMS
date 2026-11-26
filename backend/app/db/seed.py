@@ -11,7 +11,8 @@ from app.models.patient import Patient, Gender, BloodGroup
 from app.models.doctor import DoctorProfile, DoctorSchedule, DoctorBreak
 from app.models.appointment import Appointment, QueueToken, AppointmentStatus, AppointmentType, QueueStatus
 from app.models.unit import HospitalUnit
-from app.models.emr import LabReport
+from app.models.emr import LabReport, LabTest, PatientLabReport
+from app.models.nurse import NurseProfile, NurseBooking, NurseReview
 from app.core.security import hash_password
 
 
@@ -265,6 +266,10 @@ async def seed_demo_data(db: AsyncSession):
         await sync_hospital_units(db, clinic_obj.id)
         await sync_demo_lab_reports(db, clinic_obj.id)
         await sync_nurses(db, clinic_obj.id)
+        await sync_lab_tests(db, clinic_obj.id)
+        await sync_patient_lab_reports(db, clinic_obj.id)
+        await sync_nurse_reviews(db, clinic_obj.id)
+        await sync_lab_assistant(db, clinic_obj.id)
         # Ensure admin@metrohealth.com has SUPER_ADMIN role
         admin_res = await db.execute(select(User).where(User.email == "admin@metrohealth.com"))
         admin_obj = admin_res.scalar_one_or_none()
@@ -537,6 +542,9 @@ async def seed_demo_data(db: AsyncSession):
     await db.commit()
     await sync_demo_lab_reports(db, clinic.id)
     await sync_nurses(db, clinic.id)
+    await sync_lab_tests(db, clinic.id)
+    await sync_patient_lab_reports(db, clinic.id)
+    await sync_nurse_reviews(db, clinic.id)
     print("Demo clinic, users, schedules, and live queue successfully seeded!")
 
 
@@ -646,3 +654,329 @@ async def sync_nurses(db: AsyncSession, clinic_id: uuid.UUID):
 
     await db.commit()
     print("Seeded 4 realistic Bangladeshi home care nurses across Dhaka locations.")
+
+
+async def sync_lab_tests(db: AsyncSession, clinic_id: uuid.UUID):
+    """
+    Ensures 15 realistic hospital diagnostic tests (Lab Facilities) exist.
+    """
+    t_res = await db.execute(select(LabTest))
+    existing_tests = t_res.scalars().all()
+    if existing_tests:
+        return
+
+    tests_data = [
+        {
+            "test_code": "LAB-01",
+            "test_name": "Complete Blood Count (CBC)",
+            "category": "Pathology",
+            "sample_type": "Blood",
+            "price_bdt": 450.0,
+            "report_delivery_time": "Same Day (4 Hours)",
+            "description": "Comprehensive automated blood count assessing Hemoglobin, RBC, WBC differential, Platelets, and ESR.",
+        },
+        {
+            "test_code": "LAB-02",
+            "test_name": "Fasting Blood Sugar (FBS)",
+            "category": "Pathology",
+            "sample_type": "Blood",
+            "price_bdt": 200.0,
+            "report_delivery_time": "Same Day (2 Hours)",
+            "description": "Essential diagnostic test measuring plasma glucose levels following 8–10 hours of fasting.",
+        },
+        {
+            "test_code": "LAB-03",
+            "test_name": "Lipid Profile",
+            "category": "Biochemistry",
+            "sample_type": "Blood",
+            "price_bdt": 1200.0,
+            "report_delivery_time": "Same Day (6 Hours)",
+            "description": "Complete cardiovascular lipid panel: Total Cholesterol, HDL, LDL, VLDL, and Triglycerides.",
+        },
+        {
+            "test_code": "LAB-04",
+            "test_name": "HbA1c (Glycated Hemoglobin)",
+            "category": "Biochemistry",
+            "sample_type": "Blood",
+            "price_bdt": 1000.0,
+            "report_delivery_time": "1 Day",
+            "description": "Gold-standard 3-month average glycemic control assessment for diabetes mellitus management.",
+        },
+        {
+            "test_code": "LAB-05",
+            "test_name": "Liver Function Test (LFT)",
+            "category": "Biochemistry",
+            "sample_type": "Blood",
+            "price_bdt": 1100.0,
+            "report_delivery_time": "Same Day (6 Hours)",
+            "description": "Hepatic screen: SGPT (ALT), SGOT (AST), Alkaline Phosphatase, Total Bilirubin, and Total Protein/Albumin.",
+        },
+        {
+            "test_code": "LAB-06",
+            "test_name": "Serum Creatinine & RFT",
+            "category": "Biochemistry",
+            "sample_type": "Blood",
+            "price_bdt": 400.0,
+            "report_delivery_time": "Same Day (4 Hours)",
+            "description": "Kidney renal clearance function measurement with calculated estimated eGFR.",
+        },
+        {
+            "test_code": "LAB-07",
+            "test_name": "Thyroid Profile (TSH, FT3, FT4)",
+            "category": "Pathology",
+            "sample_type": "Blood",
+            "price_bdt": 1800.0,
+            "report_delivery_time": "1 Day",
+            "description": "Comprehensive immunoassay evaluating thyroid endocrine function, hypothyroidism, and hyperthyroidism.",
+        },
+        {
+            "test_code": "LAB-08",
+            "test_name": "Digital Chest X-Ray (PA View)",
+            "category": "Radiology & Imaging",
+            "sample_type": "Imaging",
+            "price_bdt": 600.0,
+            "report_delivery_time": "Same Day (2 Hours)",
+            "description": "High-resolution digital chest radiography for cardiopulmonary, bronchial, and pleural evaluation.",
+        },
+        {
+            "test_code": "LAB-09",
+            "test_name": "12-Lead Resting ECG",
+            "category": "Cardiology",
+            "sample_type": "Non-Invasive",
+            "price_bdt": 500.0,
+            "report_delivery_time": "Instant (30 Mins)",
+            "description": "Precision electrocardiogram diagnosing cardiac rhythms, myocardial ischemia, and arrhythmias.",
+        },
+        {
+            "test_code": "LAB-10",
+            "test_name": "Color Doppler Echocardiogram",
+            "category": "Cardiology",
+            "sample_type": "Imaging",
+            "price_bdt": 2800.0,
+            "report_delivery_time": "Same Day (4 Hours)",
+            "description": "Advanced 2D transthoracic ultrasound assessing cardiac chambers, ejection fraction (LVEF), and valvular flow.",
+        },
+        {
+            "test_code": "LAB-11",
+            "test_name": "Whole Abdomen Ultrasonography (USG)",
+            "category": "Radiology & Imaging",
+            "sample_type": "Imaging",
+            "price_bdt": 1500.0,
+            "report_delivery_time": "Same Day (3 Hours)",
+            "description": "Detailed real-time sonic scan of hepatobiliary, gallbladder, kidneys, spleen, pancreas, and pelvis.",
+        },
+        {
+            "test_code": "LAB-12",
+            "test_name": "Brain MRI (Plain)",
+            "category": "Radiology & Imaging",
+            "sample_type": "Imaging",
+            "price_bdt": 8500.0,
+            "report_delivery_time": "2 Days",
+            "description": "High-field 1.5 Tesla cranial magnetic resonance imaging of brain parenchyma and neurovascular structures.",
+        },
+        {
+            "test_code": "LAB-13",
+            "test_name": "Urine Routine & Microscopic (R/M/E)",
+            "category": "Pathology",
+            "sample_type": "Urine",
+            "price_bdt": 250.0,
+            "report_delivery_time": "Same Day (2 Hours)",
+            "description": "Urinalysis screening for proteinuria, glucose, pus cells, RBCs, casts, and urinary tract infection (UTI).",
+        },
+        {
+            "test_code": "LAB-14",
+            "test_name": "Serum Electrolytes (Na+, K+, Cl-)",
+            "category": "Biochemistry",
+            "sample_type": "Blood",
+            "price_bdt": 900.0,
+            "report_delivery_time": "Same Day (4 Hours)",
+            "description": "Automated ion-selective electrode measurement for systemic fluid, electrolyte, and acid-base balance.",
+        },
+        {
+            "test_code": "LAB-15",
+            "test_name": "Dengue NS1 Antigen & Antibody Panel",
+            "category": "Pathology",
+            "sample_type": "Blood",
+            "price_bdt": 800.0,
+            "report_delivery_time": "Same Day (2 Hours)",
+            "description": "Rapid immunoassay for early acute dengue detection (NS1) along with IgG and IgM antibody titres.",
+        },
+    ]
+
+    for td in tests_data:
+        test = LabTest(
+            clinic_id=clinic_id,
+            test_code=td["test_code"],
+            test_name=td["test_name"],
+            category=td["category"],
+            sample_type=td["sample_type"],
+            price_bdt=td["price_bdt"],
+            report_delivery_time=td["report_delivery_time"],
+            is_active=True,
+            description=td["description"],
+        )
+        db.add(test)
+
+    await db.commit()
+    print("Seeded 15 realistic hospital diagnostic tests (Lab Facilities).")
+
+
+async def sync_patient_lab_reports(db: AsyncSession, clinic_id: uuid.UUID):
+    """
+    Ensures sample patient lab orders & reports exist for demonstration.
+    """
+    r_res = await db.execute(select(PatientLabReport))
+    existing_reports = r_res.scalars().all()
+    if existing_reports:
+        return
+
+    p_res = await db.execute(select(Patient).where(Patient.clinic_id == clinic_id).limit(2))
+    patients = p_res.scalars().all()
+    if not patients:
+        return
+
+    p1 = patients[0]
+    p2 = patients[1] if len(patients) > 1 else patients[0]
+
+    # Create 2 sample patient lab reports
+    sample_reports = [
+        PatientLabReport(
+            clinic_id=clinic_id,
+            order_code="RPT-2026-0001",
+            patient_id=p1.id,
+            patient_name=f"{p1.first_name} {p1.last_name}",
+            patient_mrn=p1.mrn,
+            test_name="Complete Blood Count (CBC)",
+            test_code="LAB-01",
+            fee_bdt=450.0,
+            ordered_by_doctor="Dr. John Smith",
+            status="Report Ready",
+            result_summary="Hemoglobin 14.2 g/dL (Normal: 13.0 - 17.0). Platelet Count: 240,000 /mcL (Normal: 150,000 - 450,000). Total WBC: 7,500 /mcL.",
+            report_file_url="/uploads/lab-reports/sample_cbc_report.pdf",
+        ),
+        PatientLabReport(
+            clinic_id=clinic_id,
+            order_code="RPT-2026-0002",
+            patient_id=p2.id,
+            patient_name=f"{p2.first_name} {p2.last_name}",
+            patient_mrn=p2.mrn,
+            test_name="Lipid Profile",
+            test_code="LAB-03",
+            fee_bdt=1200.0,
+            ordered_by_doctor="Dr. John Smith",
+            status="Processing",
+            result_summary="Blood serum sample collected. Running enzymatic spectrophotometry in clinical laboratory.",
+        ),
+    ]
+    db.add_all(sample_reports)
+    await db.commit()
+    print("Seeded sample patient lab orders & diagnostic reports.")
+
+
+async def sync_nurse_reviews(db: AsyncSession, clinic_id: uuid.UUID):
+    """
+    Seeds initial nurse reviews for demo nurses so the directory and profiles
+    display verified ratings, and marks sample completed bookings.
+    """
+    from app.models.nurse import NurseProfile, NurseBooking, NurseReview
+    from app.models.billing import Invoice
+
+    # Check if any review exists
+    r_res = await db.execute(select(NurseReview))
+    existing_rev = r_res.scalars().first()
+
+    # Check for existing bookings
+    b_res = await db.execute(select(NurseBooking).order_by(NurseBooking.created_at.asc()))
+    bookings = b_res.scalars().all()
+    if bookings:
+        # Mark first booking (NRS-2026-0001) as Completed and Paid so patient sees "Rate Nurse" button unlocked!
+        b1 = bookings[0]
+        b1.status = "Completed"
+        b1.payment_status = "Paid"
+        b1.duty_status = "Completed"
+        if b1.invoice_id:
+            inv1 = await db.get(Invoice, b1.invoice_id)
+            if inv1:
+                inv1.payment_status = "Paid"
+                inv1.due_amount_bdt = 0.00
+                inv1.paid_amount_bdt = inv1.amount_bdt
+
+        # If there is a second booking, mark as Completed & Paid and add a review to demonstrate "You rated ★ 5.0"
+        if len(bookings) > 1 and not existing_rev:
+            b2 = bookings[1]
+            b2.status = "Completed"
+            b2.payment_status = "Paid"
+            b2.duty_status = "Completed"
+            if b2.invoice_id:
+                inv2 = await db.get(Invoice, b2.invoice_id)
+                if inv2:
+                    inv2.payment_status = "Paid"
+                    inv2.due_amount_bdt = 0.00
+                    inv2.paid_amount_bdt = inv2.amount_bdt
+
+            p2 = await db.get(Patient, b2.patient_id)
+            p_name2 = f"{p2.first_name} {p2.last_name}" if p2 else "Ayesha Siddiqua"
+            rev = NurseReview(
+                clinic_id=clinic_id,
+                booking_id=b2.id,
+                nurse_id=b2.nurse_id,
+                patient_id=b2.patient_id,
+                patient_name=p_name2,
+                rating=5,
+                comment="Nurse Rakib was extraordinarily punctual, gentle with catheter dressing, and kept my mother comfortable throughout the entire night shift. Highly recommended!"
+            )
+            db.add(rev)
+
+    # Set baseline ratings for nurses if unreviewed
+    n_res = await db.execute(select(NurseProfile))
+    all_nurses = n_res.scalars().all()
+    sample_scores = [
+        {"avg": 4.9, "count": 18},
+        {"avg": 4.8, "count": 14},
+        {"avg": 5.0, "count": 9},
+        {"avg": 4.7, "count": 11},
+    ]
+    for idx, n in enumerate(all_nurses):
+        score = sample_scores[idx % len(sample_scores)]
+        if float(n.average_rating or 0.0) == 0.0:
+            n.average_rating = score["avg"]
+            n.total_reviews = score["count"]
+
+    await db.commit()
+    print("Synchronized demo nurse reviews and live rating aggregations.")
+
+
+async def sync_lab_assistant(db: AsyncSession, clinic_id: uuid.UUID):
+    """Ensures demo lab assistant account exists for testing lab reports."""
+    lab_res = await db.execute(select(User).where(User.email == "lab@metrohealth.com"))
+    lab_user = lab_res.scalar_one_or_none()
+    if not lab_user:
+        lab_user = User(
+            email="lab@metrohealth.com",
+            hashed_password=hash_password("LabPass123!"),
+            first_name="Tariqul",
+            last_name="Islam",
+            system_role=SystemRole.LAB_ASSISTANT,
+            is_active=True,
+            is_email_verified=True
+        )
+        db.add(lab_user)
+        await db.flush()
+
+        staff = ClinicStaff(
+            clinic_id=clinic_id,
+            user_id=lab_user.id,
+            role=ClinicRole.LAB_ASSISTANT,
+            designation="Senior Lab Technologist",
+            department="Pathology & Diagnostics",
+            is_active=True
+        )
+        db.add(staff)
+        await db.commit()
+        print("Seeded demo Lab Assistant account (lab@metrohealth.com / LabPass123!).")
+    elif lab_user.system_role != SystemRole.LAB_ASSISTANT:
+        lab_user.system_role = SystemRole.LAB_ASSISTANT
+        await db.commit()
+
+
+

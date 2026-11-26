@@ -25,6 +25,7 @@ import {
   Mail,
   ChevronRight,
   Sparkles,
+  FlaskConical,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -126,46 +127,38 @@ export default function HomePage() {
               {/* Value Props */}
               <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-100">
                 <div>
-                  <div className="text-2xl font-bold text-slate-900">24/7</div>
-                  <div className="text-xs text-slate-500 font-medium">Emergency Care</div>
+                  <div className="text-2xl font-bold text-slate-900 tabular-nums">24/7</div>
+                  <div className="text-xs text-slate-600 font-semibold">Emergency Care</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-emerald-600">৳ BDT</div>
-                  <div className="text-xs text-slate-500 font-medium">Transparent Pricing</div>
+                  <div className="text-2xl font-bold text-emerald-600 tabular-nums">৳ BDT</div>
+                  <div className="text-xs text-slate-600 font-semibold">Transparent Pricing</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-emerald-600">QR-Code</div>
-                  <div className="text-xs text-slate-500 font-medium">Verified E-Prescriptions</div>
+                  <div className="text-xs text-slate-600 font-semibold">Verified E-Prescriptions</div>
                 </div>
               </div>
             </div>
 
             {/* Right Visual Image */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-md aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+            <div className="lg:col-span-5 relative flex items-center justify-center">
+              <div className="relative w-full max-w-lg aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden shadow-lg border border-slate-200">
                 <img
-                  src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=1000&auto=format&fit=crop"
-                  alt={settings?.hospital_name ? `Doctor at ${settings.hospital_name}` : "Hospital Doctor"}
-                  className="w-full h-full object-cover object-top"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=1000&auto=format&fit=crop";
-                  }}
+                  src="/images/medical-team.jpg"
+                  alt={settings?.hospital_name ? `Medical & Nursing Team at ${settings.hospital_name}` : "Verified Medical & Nursing Team"}
+                  className="w-full h-full object-cover object-center"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6 text-white">
-                  <div className="px-2.5 py-1 bg-emerald-500 rounded-md text-[11px] font-bold uppercase inline-block mb-1">
-                    Verified Senior Consultant
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/20 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 text-white">
+                  <div className="px-2.5 py-1 bg-emerald-600 rounded-md text-[11px] font-bold uppercase inline-block mb-1">
+                    Verified Medical & Nursing Team
                   </div>
-                  <div className="text-lg font-bold">
-                    {firstDoctor
-                      ? formatDoctorName(firstDoctor) + (firstDoctor.degrees ? `, ${firstDoctor.degrees}` : "")
-                      : "Dr. John Smith, MD, FACC"}
+                  <div className="text-base sm:text-lg font-bold truncate">
+                    {settings?.hospital_name || "Mir Health Specialist Care"}
                   </div>
-                  <div className="text-xs text-slate-300">
-                    {firstDoctor
-                      ? firstDoctor.specialty || firstDoctor.specialization || firstDoctor.category || "Consultant Physician"
-                      : "Head of Clinical Cardiology"}
+                  <div className="text-xs text-slate-300 truncate">
+                    {settings?.tagline || "Advanced Healthcare & Patient Management"}
                   </div>
                 </div>
               </div>
@@ -184,64 +177,132 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Hospital Features Section */}
-      <section id="features" className="py-20 bg-white border-t border-slate-100">
+      {/* Lab Facilities & Diagnostic Tests Section */}
+      <section id="features" className="py-20 bg-slate-50/70 border-t border-slate-200/80">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
-              Integrated Cloud EMR & Patient Management
-            </span>
-            <h2 className="text-3xl font-extrabold text-slate-900 mt-2">
-              Next-Generation Healthcare Cloud
-            </h2>
-            <p className="text-sm text-slate-600 mt-2">
-              Our multidisciplinary healthcare units are equipped with state-of-the-art diagnostic machinery and seamless digital workflows.
-            </p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5 mb-2">
+                <FlaskConical className="w-4 h-4" />
+                <span>Hospital Diagnostics & Pathology</span>
+              </span>
+              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                Lab Facilities & Diagnostic Tests
+              </h2>
+              <p className="text-sm text-slate-600 mt-2">
+                Certified high-precision laboratory testing with automated analyzers, transparent BDT rates, and rapid digital report delivery.
+              </p>
+            </div>
+
+            <Link
+              href="/lab-facilities"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-sm shadow-emerald-600/20 transition self-start md:self-auto shrink-0"
+            >
+              <span>View All Lab Tests</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Diagnostic Tests Preview Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
-                title: "Cardiology & CCU",
-                desc: "Advanced ECG, Echocardiogram, and 24/7 cardiac monitoring by board-certified cardiologists.",
-                icon: Heart,
-                color: "text-rose-600 bg-rose-50 border-rose-100",
+                code: "LAB-01",
+                name: "Complete Blood Count (CBC)",
+                category: "Pathology",
+                sample: "Blood",
+                price: 450,
+                delivery: "Same Day (4 Hours)",
               },
               {
-                title: "Digital E-Prescriptions",
-                desc: "Instant digital prescription with medicine dosage, frequency, and QR verification authenticity.",
-                icon: FileText,
-                color: "text-emerald-600 bg-emerald-50 border-emerald-100",
+                code: "LAB-03",
+                name: "Lipid Profile Panel",
+                category: "Biochemistry",
+                sample: "Blood",
+                price: 1200,
+                delivery: "Same Day (6 Hours)",
               },
               {
-                title: "Internal Medicine",
-                desc: "Comprehensive diagnostic workups for hypertension, diabetes, and infectious illnesses.",
-                icon: Stethoscope,
-                color: "text-emerald-600 bg-emerald-50 border-emerald-100",
+                code: "LAB-04",
+                name: "HbA1c (Glycated Hb)",
+                category: "Biochemistry",
+                sample: "Blood",
+                price: 1000,
+                delivery: "1 Day",
               },
               {
-                title: "Smart Queue & TV Board",
-                desc: "Live waiting room display board keeps patients informed and reduces clinic wait times.",
-                icon: Clock,
-                color: "text-emerald-600 bg-emerald-50 border-emerald-100",
+                code: "LAB-06",
+                name: "Serum Creatinine & RFT",
+                category: "Biochemistry",
+                sample: "Blood",
+                price: 400,
+                delivery: "Same Day (4 Hours)",
               },
-            ].map((spec, i) => {
-              const Icon = spec.icon;
-              return (
-                <div
-                  key={i}
-                  className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition"
-                >
-                  <div
-                    className={`w-12 h-12 rounded-2xl ${spec.color} flex items-center justify-center border mb-4`}
-                  >
-                    <Icon className="w-6 h-6" />
+              {
+                code: "LAB-08",
+                name: "Digital Chest X-Ray (PA)",
+                category: "Radiology & Imaging",
+                sample: "Imaging",
+                price: 600,
+                delivery: "Same Day (2 Hours)",
+              },
+              {
+                code: "LAB-09",
+                name: "12-Lead Resting ECG",
+                category: "Cardiology",
+                sample: "Non-Invasive",
+                price: 500,
+                delivery: "Instant (30 Mins)",
+              },
+              {
+                code: "LAB-10",
+                name: "Color Doppler Echo",
+                category: "Cardiology",
+                sample: "Imaging",
+                price: 2800,
+                delivery: "Same Day (4 Hours)",
+              },
+              {
+                code: "LAB-11",
+                name: "Whole Abdomen USG",
+                category: "Radiology & Imaging",
+                sample: "Imaging",
+                price: 1500,
+                delivery: "Same Day (3 Hours)",
+              },
+            ].map((t) => (
+              <div
+                key={t.code}
+                className="bg-white/90 backdrop-blur-sm p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md hover:border-emerald-300 transition flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                      {t.code}
+                    </span>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                      {t.category}
+                    </span>
                   </div>
-                  <h3 className="text-base font-bold text-slate-900 mb-2">{spec.title}</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">{spec.desc}</p>
+                  <h3 className="font-bold text-sm text-slate-900 leading-snug line-clamp-2">
+                    {t.name}
+                  </h3>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Sample: <span className="font-medium text-slate-700">{t.sample}</span>
+                  </div>
                 </div>
-              );
-            })}
+
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>{t.delivery}</span>
+                  </div>
+                  <div className="font-mono font-bold text-base text-slate-900">
+                    ৳{t.price.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -267,19 +328,19 @@ export default function HomePage() {
                   <h4 className="font-bold text-lg leading-tight">
                     {settings?.hospital_name || "Mir Health"}
                   </h4>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-300">
                     {settings?.tagline || "Smart EMR & Patient Management"}
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+              <p className="text-xs text-slate-300 max-w-md leading-relaxed">
                 A multi-tenant healthcare SaaS empowering polyclinics, independent practitioners, and medical groups with real-time appointment scheduling, electronic medical records, and digital prescriptions.
               </p>
             </div>
 
             <div className="space-y-2 text-xs">
               <h5 className="font-bold text-sm uppercase text-slate-200 tracking-wider mb-3">Portal Access</h5>
-              <ul className="space-y-2 text-slate-400">
+              <ul className="space-y-2 text-slate-300">
                 <li>
                   <Link href="/login" className="hover:text-white transition">
                     Staff & Doctor Login
@@ -305,26 +366,26 @@ export default function HomePage() {
 
             <div className="space-y-2 text-xs">
               <h5 className="font-bold text-sm uppercase text-slate-200 tracking-wider mb-3">Emergency Contact</h5>
-              <div className="space-y-2 text-slate-400">
+              <div className="space-y-2 text-slate-300">
                 <p className="flex items-center gap-2">
                   <PhoneCall className="w-4 h-4 text-rose-500" />
-                  <span className="font-bold text-white font-mono">
+                  <span className="font-bold text-white tabular-nums">
                     {settings?.emergency_hotline || "+880 1711-001122"}
                   </span>
                 </p>
                 <p className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-slate-500" />
+                  <Mail className="w-4 h-4 text-slate-400" />
                   <span>{settings?.contact_email || "care@hospital.com"}</span>
                 </p>
                 <p className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-slate-500" />
+                  <MapPin className="w-4 h-4 text-slate-400" />
                   <span>{settings?.address || "100 Medical Plaza, Suite 400, Dhaka"}</span>
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
             <p>© 2026 {settings?.hospital_name || "Hospital Management"}. All rights reserved.</p>
             <p className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />

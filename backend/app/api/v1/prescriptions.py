@@ -601,6 +601,10 @@ async def get_prescription_bundle(
             "instructions": i.instructions or ""
         })
 
+    primary_color = "#059669"
+    if clinic.letterhead_template and isinstance(clinic.letterhead_template, dict):
+        primary_color = clinic.letterhead_template.get("primary_color", "#059669")
+
     return {
         "id": str(rx.id),
         "clinic_name": clinic.name,
@@ -608,6 +612,7 @@ async def get_prescription_bundle(
         "clinic_phone": clinic.phone or "+880 1700-000000",
         "clinic_email": clinic.email or "care@metrohealth.com",
         "clinic_emergency": "Hotline: 10678 | +880 1700-000000",
+        "primary_color": primary_color,
         "prescription_code": rx.prescription_code,
         "verification_hash": rx.verification_hash,
         "verify_url": f"http://localhost:3000/verify-rx?code={rx.verification_hash}",

@@ -109,7 +109,12 @@ def build_line_items(inv: Invoice, doc_prof: Optional[DoctorProfile] = None) -> 
     ]
 
 
-def map_invoice_response(inv: Invoice, doc_profile_map: Optional[dict] = None) -> InvoiceResponse:
+def map_invoice_response(
+    inv: Invoice,
+    doc_profile_map: Optional[dict] = None,
+    review_map: Optional[dict] = None,
+    booking_map: Optional[dict] = None
+) -> InvoiceResponse:
     p_name = None
     p_mrn = None
     p_phone = None
@@ -150,6 +155,17 @@ def map_invoice_response(inv: Invoice, doc_profile_map: Optional[dict] = None) -
 
     line_items = build_line_items(inv, doc_prof)
 
+    # Resolve linked nurse booking ID and review status
+    nb_id = getattr(inv, "nurse_booking_id", None)
+    if not nb_id and booking_map and inv.id in booking_map:
+        nb_id = booking_map[inv.id]
+
+    has_reviewed = False
+    submitted_rating = None
+    if nb_id and review_map and nb_id in review_map:
+        has_reviewed = True
+        submitted_rating = review_map[nb_id].rating
+
     return InvoiceResponse(
         id=inv.id,
         clinic_id=inv.clinic_id,
@@ -188,6 +204,9 @@ def map_invoice_response(inv: Invoice, doc_profile_map: Optional[dict] = None) -
         doctor_specialty=d_specialty,
         chamber_location=chamber_loc,
         unit_code=u_code,
+        nurse_booking_id=nb_id,
+        has_reviewed=has_reviewed,
+        submitted_rating=submitted_rating,
         line_items=line_items,
         items=[],
         payments=[]
@@ -314,7 +333,26 @@ async def get_my_invoices(
     )
     res = await db.execute(stmt)
     invoices = res.scalars().all()
-    return [map_invoice_response(inv, doc_map) for inv in invoices]
+
+    # Look up nurse bookings and reviews for nurse-related invoices
+    booking_map = {}
+    review_map = {}
+    from app.models.nurse import NurseBooking, NurseReview
+    nb_res = await db.execute(select(NurseBooking).where(NurseBooking.patient_id == patient.id))
+    patient_bookings = nb_res.scalars().all()
+    b_ids = [b.id for b in patient_bookings]
+    for b in patient_bookings:
+        if b.invoice_id:
+            booking_map[b.invoice_id] = b.id
+        if b.overtime_invoice_id:
+            booking_map[b.overtime_invoice_id] = b.id
+
+    if b_ids:
+        rev_res = await db.execute(select(NurseReview).where(NurseReview.booking_id.in_(b_ids)))
+        for rev in rev_res.scalars().all():
+            review_map[rev.booking_id] = rev
+
+    return [map_invoice_response(inv, doc_map, review_map, booking_map) for inv in invoices]
 
 
 @router.get("/invoices/my-summary")
@@ -409,7 +447,7 @@ async def get_invoice(
 # ==============================================================================
 
 @router.get("/pending-units")
-@reception_router.get("/pending-units")
+@reception_router.get("/pending-units", include_in_schema=False)
 async def list_pending_reception_units(
     tenant: TenantContext = Depends(get_current_tenant),
     db: AsyncSession = Depends(get_db)
@@ -463,8 +501,9 @@ async def list_pending_reception_units(
     return result
 
 
-@router.api_route("/confirm-unit-bill", methods=["POST", "PATCH"], response_model=InvoiceResponse)
-@reception_router.api_route("/confirm-unit-bill", methods=["POST", "PATCH"], response_model=InvoiceResponse)
+@router.post("/confirm-unit-bill", response_model=InvoiceResponse, operation_id="confirm_unit_bill_post")
+@router.patch("/confirm-unit-bill", response_model=InvoiceResponse, include_in_schema=False)
+@reception_router.api_route("/confirm-unit-bill", methods=["POST", "PATCH"], response_model=InvoiceResponse, include_in_schema=False)
 async def confirm_unit_bill(
     payload: ConfirmUnitBillRequest,
     current_user: User = Depends(get_current_user),
@@ -590,12 +629,13 @@ async def confirm_unit_bill(
 # RECEPTION DESK: PAYMENT COLLECTION & CONFIRMATION
 # ==============================================================================
 
-@router.api_route("/invoices/{invoice_id}/confirm-payment", methods=["PATCH", "POST"], response_model=InvoiceResponse)
-@router.api_route("/invoices/{invoice_id}/pay", methods=["PATCH", "POST"], response_model=InvoiceResponse)
-@invoices_router.api_route("/{invoice_id}/confirm-payment", methods=["PATCH", "POST"], response_model=InvoiceResponse)
-@invoices_router.api_route("/{invoice_id}/pay", methods=["PATCH", "POST"], response_model=InvoiceResponse)
-@reception_router.api_route("/invoices/{invoice_id}/confirm-payment", methods=["PATCH", "POST"], response_model=InvoiceResponse)
-@reception_router.api_route("/invoices/{invoice_id}/pay", methods=["PATCH", "POST"], response_model=InvoiceResponse)
+@router.post("/invoices/{invoice_id}/confirm-payment", response_model=InvoiceResponse, operation_id="confirm_invoice_payment_post")
+@router.patch("/invoices/{invoice_id}/confirm-payment", response_model=InvoiceResponse, include_in_schema=False)
+@router.api_route("/invoices/{invoice_id}/pay", methods=["PATCH", "POST"], response_model=InvoiceResponse, include_in_schema=False)
+@invoices_router.api_route("/{invoice_id}/confirm-payment", methods=["PATCH", "POST"], response_model=InvoiceResponse, include_in_schema=False)
+@invoices_router.api_route("/{invoice_id}/pay", methods=["PATCH", "POST"], response_model=InvoiceResponse, include_in_schema=False)
+@reception_router.api_route("/invoices/{invoice_id}/confirm-payment", methods=["PATCH", "POST"], response_model=InvoiceResponse, include_in_schema=False)
+@reception_router.api_route("/invoices/{invoice_id}/pay", methods=["PATCH", "POST"], response_model=InvoiceResponse, include_in_schema=False)
 async def confirm_invoice_payment(
     invoice_id: str,
     payload: ConfirmPaymentRequest,
@@ -674,11 +714,13 @@ async def confirm_invoice_payment(
     await log_audit_event(
         db=db,
         action=AuditAction.UPDATE,
-        resource_type="Invoice Payment",
-        resource_id=str(inv.id),
+        action_title="Collected Invoice Payment",
+        resource_type="Invoices & Billing",
+        resource_id=str(inv.invoice_number),
         clinic_id=inv.clinic_id,
-        user_id=current_user.id,
+        user=current_user,
         patient_id=inv.patient_id,
+        details=f"Received payment of ৳{amt_to_pay:,.2f} via {payload.payment_method} for Invoice #{inv.invoice_number} ({inv.bill_type})",
         payload_diff={
             "invoice_number": inv.invoice_number,
             "bill_type": inv.bill_type,
@@ -787,8 +829,12 @@ async def print_invoice_html(
     due = float(inv.due_amount_bdt if inv.due_amount_bdt is not None else inv.balance_amount)
 
     is_paid = (inv.payment_status or "").upper() == "PAID" or inv.status == InvoiceStatus.PAID or due <= 0
+    primary_color = "#059669"
+    if clinic.letterhead_template and isinstance(clinic.letterhead_template, dict):
+        primary_color = clinic.letterhead_template.get("primary_color", "#059669")
+
     status_stamp = (
-        '<div style="display:inline-block; border: 2.5px solid #059669; color: #059669; font-size: 15px; font-weight: 800; letter-spacing: 1.5px; padding: 6px 16px; border-radius: 6px; text-transform: uppercase;">✓ PAID IN FULL</div>'
+        f'<div style="display:inline-block; border: 2.5px solid {primary_color}; color: {primary_color}; font-size: 15px; font-weight: 800; letter-spacing: 1.5px; padding: 6px 16px; border-radius: 6px; text-transform: uppercase;">✓ PAID IN FULL</div>'
         if is_paid else
         '<div style="display:inline-block; border: 2.5px solid #e11d48; color: #e11d48; font-size: 15px; font-weight: 800; letter-spacing: 1.5px; padding: 6px 16px; border-radius: 6px; text-transform: uppercase;">⚠ PAYMENT DUE</div>'
     )
@@ -849,7 +895,7 @@ async def print_invoice_html(
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      border-bottom: 2px solid #059669;
+      border-bottom: 2px solid {primary_color};
       padding-bottom: 20px;
       margin-bottom: 24px;
     }}
@@ -857,7 +903,7 @@ async def print_invoice_html(
       width: 44px;
       height: 44px;
       border-radius: 10px;
-      background: #059669;
+      background: {primary_color};
       color: #ffffff;
       display: flex;
       align-items: center;

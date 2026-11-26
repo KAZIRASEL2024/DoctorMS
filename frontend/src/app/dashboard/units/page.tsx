@@ -27,15 +27,30 @@ import {
 } from "lucide-react";
 
 export default function HospitalUnitsPage() {
-  const { user } = useAuth();
+  const { user, currentRole } = useAuth();
   const queryClient = useQueryClient();
 
-  // Strict Role Check: Super Admin only for Add/Edit/Delete
-  const isSuperAdmin = user?.system_role === "SUPER_ADMIN";
-  const isDoctor = (user as any)?.role === "DOCTOR" || user?.clinic_memberships?.some((m: any) => m.role === "DOCTOR");
+  // Role Checks
+  const isSuperAdmin =
+    currentRole === "SUPER_ADMIN" ||
+    user?.system_role === "SUPER_ADMIN" ||
+    (user as any)?.role === "SUPER_ADMIN";
+
+  const isDoctor =
+    currentRole === "DOCTOR" ||
+    (user as any)?.role === "DOCTOR" ||
+    user?.system_role === "DOCTOR" ||
+    user?.clinic_memberships?.some((m: any) => m.role === "DOCTOR");
+
+  const isReceptionist =
+    currentRole === "RECEPTIONIST" ||
+    (user as any)?.role === "RECEPTIONIST" ||
+    user?.system_role === "RECEPTIONIST" ||
+    user?.clinic_memberships?.some((m: any) => m.role === "RECEPTIONIST");
 
   // Filter state
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "FREE" | "BOOKED">("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Modal States
@@ -99,6 +114,9 @@ export default function HospitalUnitsPage() {
       if (selectedCategory !== "ALL" && !u.category.toLowerCase().includes(selectedCategory.toLowerCase())) {
         return false;
       }
+      if (statusFilter !== "ALL" && u.status !== statusFilter) {
+        return false;
+      }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const code = u.unit_code.toLowerCase();
@@ -109,7 +127,7 @@ export default function HospitalUnitsPage() {
       }
       return true;
     });
-  }, [units, selectedCategory, searchQuery]);
+  }, [units, selectedCategory, statusFilter, searchQuery]);
 
   // Mutations
   const assignMutation = useMutation({
@@ -221,13 +239,13 @@ export default function HospitalUnitsPage() {
     });
   };
 
-  // Helper icon for categories
+  // Helper icon for categories (small neutral bed/unit icon w-3.5 h-3.5 text-slate-500)
   const getCategoryIcon = (category: string) => {
-    const cat = category.toLowerCase();
-    if (cat.includes("icu")) return <Activity className="w-4 h-4 text-slate-500 shrink-0" />;
-    if (cat.includes("ccu")) return <Heart className="w-4 h-4 text-slate-500 shrink-0" />;
-    if (cat.includes("cabin")) return <Building className="w-4 h-4 text-slate-500 shrink-0" />;
-    return <Bed className="w-4 h-4 text-slate-500 shrink-0" />;
+    const cat = (category || "").toLowerCase();
+    if (cat.includes("icu")) return <Activity className="w-3.5 h-3.5 text-slate-500 shrink-0" />;
+    if (cat.includes("ccu")) return <Heart className="w-3.5 h-3.5 text-slate-500 shrink-0" />;
+    if (cat.includes("cabin")) return <Building className="w-3.5 h-3.5 text-slate-500 shrink-0" />;
+    return <Bed className="w-3.5 h-3.5 text-slate-500 shrink-0" />;
   };
 
   return (
@@ -241,11 +259,11 @@ export default function HospitalUnitsPage() {
               <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
                 <Bed className="w-5 h-5 text-emerald-600" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Hospital Units & Ward Layout
               </h1>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 mt-0.5">
               Real-time occupancy management for General Beds, Private Cabins, ICU, and CCU facilities.
             </p>
           </div>
@@ -272,8 +290,8 @@ export default function HospitalUnitsPage() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Capacity</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">{stats.total} Units</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Beds, Cabins & Specialized Care</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">{stats.total} Units</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Beds, Cabins & Specialized Care</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold">
             <Building className="w-5 h-5" />
@@ -284,8 +302,8 @@ export default function HospitalUnitsPage() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Booked Units</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">{stats.booked} Occupied</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Currently Admitted Patients</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">{stats.booked} Occupied</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Currently Admitted Patients</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold">
             <AlertCircle className="w-5 h-5" />
@@ -296,8 +314,8 @@ export default function HospitalUnitsPage() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Free Units</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">{stats.free} Available</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Ready for Immediate Admission</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">{stats.free} Available</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Ready for Immediate Admission</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold">
             <CheckCircle2 className="w-5 h-5" />
@@ -308,8 +326,8 @@ export default function HospitalUnitsPage() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Occupancy Rate</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">{stats.occupancyRate}%</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Live Utilization Metric</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">{stats.occupancyRate}%</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Live Utilization Metric</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold">
             <Activity className="w-5 h-5" />
@@ -317,10 +335,79 @@ export default function HospitalUnitsPage() {
         </div>
       </div>
 
-      {/* Filter Tabs & Visual Legend */}
-      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* Filter Tabs, Live Search & Status Filters */}
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Live Search Input (Unit Code or Patient Name) */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by Unit Code (e.g. CCU-01, BED-101) or Patient Name..."
+              className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Status Filter Pills (Free / Booked) */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("ALL")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                statusFilter === "ALL"
+                  ? "bg-slate-900 text-white shadow-xs"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              All ({stats.total})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter(statusFilter === "FREE" ? "ALL" : "FREE")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                statusFilter === "FREE"
+                  ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${statusFilter === "FREE" ? "bg-white" : "bg-emerald-500"}`} />
+              <span>Free</span>
+              <span className={`text-[10px] ${statusFilter === "FREE" ? "text-emerald-100" : "text-emerald-600"}`}>
+                ({stats.free})
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter(statusFilter === "BOOKED" ? "ALL" : "BOOKED")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                statusFilter === "BOOKED"
+                  ? "bg-rose-600 text-white border-rose-600 shadow-xs"
+                  : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${statusFilter === "BOOKED" ? "bg-white" : "bg-rose-500"}`} />
+              <span>Booked</span>
+              <span className={`text-[10px] ${statusFilter === "BOOKED" ? "text-rose-100" : "text-rose-600"}`}>
+                ({stats.booked})
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* Category Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 pt-2.5 border-t border-slate-100">
+          <span className="text-[11px] font-semibold text-slate-400 mr-1 uppercase tracking-wider">Ward Type:</span>
           {categories.map((c) => {
             const isSelected = selectedCategory === c.key;
             const count =
@@ -330,8 +417,9 @@ export default function HospitalUnitsPage() {
             return (
               <button
                 key={c.key}
+                type="button"
                 onClick={() => setSelectedCategory(c.key)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
                   isSelected
                     ? "bg-slate-900 text-white shadow-xs"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -349,20 +437,6 @@ export default function HospitalUnitsPage() {
             );
           })}
         </div>
-
-        {/* Top-Right Visual Legend (Exact colors: Green = Free, Red = Booked) */}
-        <div className="flex items-center gap-2.5 text-xs font-medium self-end md:self-center">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="font-semibold">Free</span>
-            <span className="text-[10px] text-emerald-600">({stats.free})</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700">
-            <span className="w-2 h-2 rounded-full bg-rose-500" />
-            <span className="font-semibold">Booked</span>
-            <span className="text-[10px] text-rose-600">({stats.booked})</span>
-          </div>
-        </div>
       </div>
 
       {/* Layout Grid */}
@@ -376,15 +450,25 @@ export default function HospitalUnitsPage() {
           <Bed className="w-10 h-10 text-slate-300 mx-auto mb-2" />
           <h3 className="text-sm font-bold text-slate-700">No hospital units found</h3>
           <p className="text-xs text-slate-400 mt-1">
-            {selectedCategory !== "ALL"
+            {searchQuery
+              ? `No units matching "${searchQuery}".`
+              : selectedCategory !== "ALL"
               ? `No units registered under "${selectedCategory}".`
+              : statusFilter !== "ALL"
+              ? `No units currently marked as ${statusFilter}.`
               : "No units have been configured yet."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5">
           {filteredUnits.map((unit) => {
             const isFree = unit.status === "FREE";
+
+            const tileInteractiveClasses = isFree
+              ? "cursor-pointer hover:border-[var(--brand-primary)] hover:shadow-md hover:-translate-y-0.5"
+              : isDoctor
+              ? "cursor-not-allowed opacity-90"
+              : "cursor-pointer hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5";
 
             return (
               <div
@@ -392,102 +476,53 @@ export default function HospitalUnitsPage() {
                 onClick={() => {
                   if (isFree) {
                     setAssignModalUnit(unit);
-                  } else {
+                  } else if (!isDoctor) {
                     setDetailsModalUnit(unit);
                   }
                 }}
-                className="bg-white border border-slate-200 hover:border-slate-300 shadow-xs rounded-lg p-3 transition flex flex-col justify-between cursor-pointer group text-left"
+                title={
+                  isFree
+                    ? `${unit.unit_code} - ${unit.unit_name} (${unit.category}) • ৳${Number(unit.daily_price).toLocaleString()}/day • Click to Assign`
+                    : isDoctor
+                    ? `${unit.unit_code} is occupied by ${unit.patient_name || "Patient"} (Locked for Doctors)`
+                    : `${unit.unit_code} is occupied by ${unit.patient_name || "Patient"} • Click for details / discharge`
+                }
+                className={`bg-white/85 backdrop-blur-md border border-slate-200/90 rounded-xl p-2.5 flex flex-col items-center justify-between text-center min-h-[96px] transition select-none ${tileInteractiveClasses}`}
               >
-                {/* Top Row: Category Icon + Unit Code on Left, Status Badge on Right */}
-                <div>
-                  <div className="flex items-center justify-between gap-1.5 mb-1.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      {getCategoryIcon(unit.category)}
-                      <span className="text-sm font-semibold text-slate-800 whitespace-nowrap truncate">
-                        {unit.unit_code}
-                      </span>
-                    </div>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${
-                        isFree
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-rose-50 text-rose-700 border border-rose-200"
-                      }`}
-                    >
-                      {isFree ? "Free" : "Booked"}
-                    </span>
-                  </div>
-
-                  {/* Middle Row: Subtitle + Occupant if Booked */}
-                  <div className="space-y-0.5 mb-2.5">
-                    <div className="text-xs text-slate-500 truncate">
-                      {unit.floor || "1st Floor"} • ৳{Number(unit.daily_price).toLocaleString()}/d
-                    </div>
-                    {isFree ? (
-                      <div className="text-xs text-slate-400 truncate italic">
-                        {unit.unit_name}
-                      </div>
-                    ) : (
-                      <div className="text-xs font-medium text-slate-700 truncate flex items-center gap-1">
-                        <User className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="truncate">{unit.patient_name || "Admitted Patient"}</span>
-                      </div>
-                    )}
-                  </div>
+                {/* 1. Top Row: Small neutral bed/unit icon + compact Unit Code pill */}
+                <div className="flex items-center justify-center gap-1.5 w-full">
+                  {getCategoryIcon(unit.category)}
+                  <span className="text-[11px] font-bold text-slate-800 whitespace-nowrap truncate">
+                    {unit.unit_code}
+                  </span>
                 </div>
 
-                {/* Bottom Action: Slim, subtle outline/ghost button */}
-                <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isFree) {
-                        setAssignModalUnit(unit);
-                      } else {
-                        setDetailsModalUnit(unit);
-                      }
-                    }}
-                    className="w-full py-1.5 text-xs font-medium rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-1 transition"
-                  >
-                    {isFree ? (
-                      <>
-                        <Plus className="w-3 h-3 text-slate-500" />
-                        <span>Assign</span>
-                      </>
-                    ) : (
-                      <span>Details / Discharge</span>
-                    )}
-                  </button>
+                {/* 2. Middle Text: Admitted patient's short name if Booked; subtle "Ready" if Free */}
+                <div className="w-full px-1 my-1">
+                  {isFree ? (
+                    <span className="text-xs font-medium text-slate-500 block truncate">
+                      Ready
+                    </span>
+                  ) : (
+                    <span
+                      className="text-xs font-semibold text-slate-900 block truncate w-full"
+                      title={unit.patient_name || "Admitted Patient"}
+                    >
+                      {unit.patient_name || "Admitted Patient"}
+                    </span>
+                  )}
+                </div>
 
-                  {/* Super Admin Only: Edit Price & Delete Controls */}
-                  {isSuperAdmin && (
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenEdit(unit);
-                        }}
-                        title="Edit Price & Details"
-                        className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm(`Are you sure you want to delete unit ${unit.unit_code}?`)) {
-                            deleteUnitMutation.mutate(unit.id);
-                          }
-                        }}
-                        title="Delete Unit"
-                        className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-slate-50 transition"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
+                {/* 3. Bottom Status Pill (Strict Green/Red Rule) */}
+                <div>
+                  {isFree ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      FREE
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+                      BOOKED
+                    </span>
                   )}
                 </div>
               </div>
@@ -520,12 +555,25 @@ export default function HospitalUnitsPage() {
 
             {/* Unit Details Header */}
             <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-xs space-y-1">
-              <div className="flex justify-between font-bold text-emerald-950">
+              <div className="flex justify-between items-center font-bold text-emerald-950">
                 <span>{assignModalUnit.unit_code} - {assignModalUnit.unit_name}</span>
                 <span className="font-mono">৳ {Number(assignModalUnit.daily_price).toLocaleString()} / day</span>
               </div>
-              <div className="text-[11px] text-emerald-700">
-                Category: <strong>{assignModalUnit.category}</strong> • Floor: {assignModalUnit.floor || "1st Floor"}
+              <div className="flex items-center justify-between text-[11px] text-emerald-700">
+                <span>Category: <strong>{assignModalUnit.category}</strong> • Floor: {assignModalUnit.floor || "1st Floor"}</span>
+                {isSuperAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const u = assignModalUnit;
+                      setAssignModalUnit(null);
+                      handleOpenEdit(u);
+                    }}
+                    className="text-[11px] font-semibold text-emerald-800 hover:underline flex items-center gap-1"
+                  >
+                    <Edit2 className="w-3 h-3" /> Edit Unit
+                  </button>
+                )}
               </div>
             </div>
 
@@ -622,9 +670,24 @@ export default function HospitalUnitsPage() {
                   <div className="text-xs font-bold text-rose-950">{detailsModalUnit.patient_name}</div>
                   <div className="text-[11px] text-slate-500 font-mono">MRN: {detailsModalUnit.patient_mrn}</div>
                 </div>
-                <span className="px-2 py-0.5 bg-rose-200 text-rose-900 font-bold rounded text-[10px] uppercase">
-                  Occupied
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {isSuperAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const u = detailsModalUnit;
+                        setDetailsModalUnit(null);
+                        handleOpenEdit(u);
+                      }}
+                      className="px-2 py-0.5 bg-white text-slate-700 border border-rose-200 hover:bg-slate-50 rounded text-[10px] font-medium flex items-center gap-1 transition"
+                    >
+                      <Edit2 className="w-2.5 h-2.5" /> Edit
+                    </button>
+                  )}
+                  <span className="px-2 py-0.5 bg-rose-200 text-rose-900 font-bold rounded text-[10px] uppercase">
+                    Occupied
+                  </span>
+                </div>
               </div>
 
               <div className="pt-2 border-t border-rose-200/60 grid grid-cols-2 gap-2 text-[11px]">

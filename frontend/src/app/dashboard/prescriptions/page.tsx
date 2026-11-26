@@ -118,13 +118,13 @@ export default function PrescriptionsHistoryPage() {
         <div className="flex items-center gap-3">
           <BackButton fallbackHref={isPatient ? "/patient/dashboard" : "/dashboard"} />
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100/60">
                 <FileText className="w-5 h-5 text-emerald-600" />
               </div>
               {isPatient ? "My Digital Prescriptions (E-Rx)" : "Issued Digital Prescriptions (E-Rx)"}
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 mt-0.5">
               Official digitally signed prescriptions with cryptographic QR verification proofs and printable letterheads.
             </p>
           </div>
@@ -144,8 +144,8 @@ export default function PrescriptionsHistoryPage() {
               className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500"
             />
           </div>
-          <span className="text-xs text-slate-500 font-medium">
-            Total E-Rx Records: <strong className="text-slate-800">{prescriptions.length}</strong>
+          <span className="text-xs text-slate-600 font-medium">
+            Total E-Rx Records: <strong className="text-slate-900">{prescriptions.length}</strong>
           </span>
         </div>
 
@@ -170,7 +170,7 @@ export default function PrescriptionsHistoryPage() {
           <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <table className="min-w-[750px] w-full text-left text-sm">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   <th className="py-3 px-4 whitespace-nowrap sticky left-0 bg-slate-50 z-10 shadow-xs">RX Code</th>
                   <th className="py-3 px-4 whitespace-nowrap">Patient Profile</th>
                   <th className="py-3 px-4 whitespace-nowrap">Consultant Physician</th>
@@ -185,14 +185,14 @@ export default function PrescriptionsHistoryPage() {
                 {prescriptions.map((rx: any) => (
                   <tr key={rx.id} className="hover:bg-slate-50/80 transition-colors">
                     {/* RX Code */}
-                    <td className="py-3.5 px-4 font-mono font-bold text-emerald-700 text-xs whitespace-nowrap sticky left-0 bg-white z-10 shadow-xs">
+                    <td className="py-3.5 px-4 tabular-nums font-bold text-emerald-700 text-xs whitespace-nowrap sticky left-0 bg-white z-10 shadow-xs">
                       {rx.prescription_code}
                     </td>
 
                     {/* Patient */}
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-slate-900 text-xs">{rx.patient_name}</div>
-                      <div className="text-[11px] text-slate-400 font-mono flex items-center gap-2">
+                      <div className="text-[11px] text-slate-600 tabular-nums flex items-center gap-2">
                         <span>{rx.patient_mrn}</span>
                         {rx.patient_age && <span>• {rx.patient_age} yrs</span>}
                         {rx.patient_gender && <span>({rx.patient_gender[0]})</span>}
@@ -201,33 +201,33 @@ export default function PrescriptionsHistoryPage() {
 
                     {/* Doctor */}
                     <td className="py-3.5 px-4">
-                      <div className="text-xs font-semibold text-slate-800">{rx.doctor_name}</div>
-                      <div className="text-[10px] text-emerald-600 font-medium">{rx.doctor_specialization}</div>
+                      <div className="text-xs font-semibold text-slate-900">{rx.doctor_name}</div>
+                      <div className="text-[11px] text-emerald-700 font-medium">{rx.doctor_specialization}</div>
                     </td>
 
                     {/* Diagnosis & Facility */}
                     <td className="py-3.5 px-4">
-                      <div className="text-xs font-medium text-slate-800 line-clamp-1">
+                      <div className="text-xs font-medium text-slate-900 line-clamp-1">
                         {rx.diagnosis || "Clinical Consultation"}
                       </div>
                       <div className="mt-1">{getBedBadge(rx.bed_assignment || rx.diet_instructions)}</div>
                     </td>
 
                     {/* Medications */}
-                    <td className="py-3.5 px-4 text-xs font-medium text-slate-700">
-                      <div className="flex items-center gap-1.5 text-slate-800 font-semibold">
+                    <td className="py-3.5 px-4 text-xs font-medium text-slate-800">
+                      <div className="flex items-center gap-1.5 text-slate-900 font-semibold">
                         <Pill className="w-3.5 h-3.5 text-emerald-600" />
                         <span>{rx.items_count || rx.items?.length || 0} Medications</span>
                       </div>
                       {rx.items && rx.items.length > 0 && (
-                        <div className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">
+                        <div className="text-[11px] text-slate-600 line-clamp-1 mt-0.5">
                           {rx.items.map((i: any) => i.medicine_name).join(", ")}
                         </div>
                       )}
                     </td>
 
                     {/* Date */}
-                    <td className="py-3.5 px-4 text-xs text-slate-500 font-mono whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-xs text-slate-700 tabular-nums whitespace-nowrap">
                       {rx.created_at ? new Date(rx.created_at).toLocaleDateString() : "Today"}
                     </td>
 

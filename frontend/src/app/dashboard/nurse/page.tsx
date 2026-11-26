@@ -27,6 +27,7 @@ import {
   PowerOff,
   AlertTriangle,
   Upload,
+  Star,
 } from "lucide-react";
 import { BackButton } from "@/components/ui/back-button";
 import { LiveDutyTimer } from "@/components/nurse/live-duty-timer";
@@ -184,15 +185,15 @@ export default function NurseDashboardPage() {
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Registered Home Care Nurse
               </span>
-              <span className="text-xs text-slate-400 font-mono">
+              <span className="text-xs text-slate-500 font-sans">
                 Duty Engine v2.0
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1 flex items-center gap-2">
               <HeartPulse className="w-6 h-6 text-emerald-600" />
               <span>Nurse Clinical Portal</span>
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-sm text-slate-600 mt-0.5">
               Review assigned patient home visits, run live duty timers, and track completed care earnings.
             </p>
           </div>
@@ -281,10 +282,25 @@ export default function NurseDashboardPage() {
                     Paused / Off-Duty
                   </span>
                 )}
+                {/* Nurse Live Rating Badge */}
+                {profile?.total_reviews && profile.total_reviews > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                    <span>★ {Number(profile.average_rating || 5.0).toFixed(1)}</span>
+                    <span className="font-normal text-amber-700">
+                      ({profile.total_reviews} {profile.total_reviews === 1 ? "review" : "reviews"})
+                    </span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                    <Star className="w-3 h-3 text-slate-400" />
+                    <span>★ No reviews yet</span>
+                  </span>
+                )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                <span className="flex items-center gap-1 font-medium text-slate-700">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+                <span className="flex items-center gap-1 font-medium text-slate-800">
                   <Award className="w-3.5 h-3.5 text-emerald-600" />
                   {profile?.education || "B.Sc in Nursing (DU), Critical Care Certified"}
                 </span>
@@ -292,7 +308,7 @@ export default function NurseDashboardPage() {
                   <MapPin className="w-3.5 h-3.5 text-rose-500" />
                   Coverage: {profile?.service_location || "Dhaka Central"}
                 </span>
-                <span className="flex items-center gap-1 font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">
+                <span className="flex items-center gap-1 text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded tabular-nums">
                   ৳ {Number(profile?.service_fee_bdt || 1500).toLocaleString()} / session
                 </span>
               </div>
@@ -333,13 +349,32 @@ export default function NurseDashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Patient Rating & Feedback */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Patient Rating</p>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">
+                {profile?.total_reviews ? Number(profile.average_rating || 5.0).toFixed(1) : "5.0"}
+              </span>
+              <Star className="w-5 h-5 fill-amber-400 text-amber-500" />
+            </div>
+            <p className="text-[11px] text-amber-700 font-medium mt-0.5">
+              {profile?.total_reviews || 0} {profile?.total_reviews === 1 ? "Verified Review" : "Verified Reviews"}
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200">
+            <Star className="w-6 h-6 fill-amber-400 text-amber-500" />
+          </div>
+        </div>
+
         {/* Total Bookings */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Bookings</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">{totalBookings}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Assigned Home Care</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Bookings</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">{totalBookings}</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Assigned Home Care</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
             <Calendar className="w-6 h-6" />
@@ -349,11 +384,11 @@ export default function NurseDashboardPage() {
         {/* Pending / Active Shifts */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Active & Scheduled</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active & Scheduled</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">
               {bookings.filter((b) => b.duty_status === "In Progress" || b.duty_status === "Ready to Start").length}
             </p>
-            <p className="text-xs text-emerald-600 mt-0.5">
+            <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
               {activeDutyBooking ? "1 Duty In Progress" : "Ready for Home Visits"}
             </p>
           </div>
@@ -365,9 +400,9 @@ export default function NurseDashboardPage() {
         {/* Completed Shifts */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Completed Sessions</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">{completedBookings.length}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Verified Patient Visits</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Completed Sessions</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">{completedBookings.length}</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Verified Patient Visits</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
             <CheckCircle2 className="w-6 h-6" />
@@ -377,11 +412,11 @@ export default function NurseDashboardPage() {
         {/* Completed Revenue & Overtime */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Revenue</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1 font-mono">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Revenue</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">
               ৳ {totalEarningsBdt.toLocaleString()}
             </p>
-            <p className="text-xs text-emerald-600 mt-0.5">
+            <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
               {totalOvertimeBdt > 0 ? `Incl. ৳${totalOvertimeBdt} overtime` : "Standard shift rates"}
             </p>
           </div>

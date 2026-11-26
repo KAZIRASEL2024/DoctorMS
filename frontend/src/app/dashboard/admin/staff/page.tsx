@@ -180,6 +180,9 @@ export default function AdminStaffPage() {
       setFollowUpFee(500);
       setVisitingDays("Sat - Thu");
       setVisitingHours("5:00 PM - 9:00 PM");
+    } else if (newRole === "LAB_ASSISTANT") {
+      setDesignation("Medical Lab Technologist");
+      setDepartment("Diagnostic Laboratory");
     } else {
       setDesignation("Staff Officer");
       setDepartment("Frontdesk");
@@ -255,11 +258,11 @@ export default function AdminStaffPage() {
         <div className="flex items-center gap-3">
           <BackButton fallbackHref="/dashboard/admin" />
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
               <Users className="w-6 h-6 text-emerald-600" />
               Staff & Clinical Directory
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 mt-0.5">
               Manage clinic doctors, home care nurses, receptionists, consultation fees (৳ BDT), and assign booking availability.
             </p>
           </div>
@@ -280,43 +283,39 @@ export default function AdminStaffPage() {
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setFilterRole("ALL")}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border ${
-            filterRole === "ALL"
-              ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
-              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-          }`}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border ${filterRole === "ALL"
+            ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+            }`}
         >
           All Staff ({staff.length})
         </button>
         <button
           onClick={() => setFilterRole("DOCTOR")}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border ${
-            filterRole === "DOCTOR"
-              ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
-              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-          }`}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border ${filterRole === "DOCTOR"
+            ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+            }`}
         >
           🩺 Doctors ({staff.filter((s) => s.role === "DOCTOR").length})
         </button>
         <button
           onClick={() => setFilterRole("NURSE")}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border ${
-            filterRole === "NURSE"
-              ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
-              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-          }`}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border ${filterRole === "NURSE"
+            ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+            }`}
         >
           👩‍⚕️ Home Care Nurses ({staff.filter((s) => s.role === "NURSE").length})
         </button>
         <button
           onClick={() => setFilterRole("OTHER")}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border ${
-            filterRole === "OTHER"
-              ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
-              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-          }`}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border ${filterRole === "OTHER"
+            ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+            }`}
         >
-          📋 Reception & Admins ({staff.filter((s) => s.role !== "DOCTOR" && s.role !== "NURSE").length})
+          📋 Reception, Lab & Admins ({staff.filter((s) => s.role !== "DOCTOR" && s.role !== "NURSE").length})
         </button>
       </div>
 
@@ -330,7 +329,7 @@ export default function AdminStaffPage() {
           <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <table className="min-w-[750px] w-full text-left text-sm">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   <th className="py-3.5 px-4 whitespace-nowrap sticky left-0 bg-slate-50 z-10 shadow-xs">Staff Member</th>
                   <th className="py-3.5 px-4 whitespace-nowrap">Role</th>
                   <th className="py-3.5 px-4 whitespace-nowrap">Department / Coverage</th>
@@ -354,15 +353,15 @@ export default function AdminStaffPage() {
                     const displayName = isDoctor
                       ? formatDoctorName(s.first_name, s.last_name)
                       : isNurse
-                      ? (s.first_name.startsWith("Nurse") ? `${s.first_name} ${s.last_name}` : `Nurse ${s.first_name} ${s.last_name}`)
-                      : `${s.first_name} ${s.last_name}`;
+                        ? (s.first_name.startsWith("Nurse") ? `${s.first_name} ${s.last_name}` : `Nurse ${s.first_name} ${s.last_name}`)
+                        : `${s.first_name} ${s.last_name}`;
 
                     return (
                       <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
                         {/* Name & Contact */}
                         <td className="py-3.5 px-4 sticky left-0 bg-white z-10 shadow-xs">
-                          <div className="font-semibold text-slate-800">{displayName}</div>
-                          <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                          <div className="font-semibold text-slate-900">{displayName}</div>
+                          <div className="text-xs text-slate-600 flex items-center gap-2 mt-0.5">
                             <span>{s.email}</span>
                             {s.phone && <span>• {s.phone}</span>}
                           </div>
@@ -371,13 +370,12 @@ export default function AdminStaffPage() {
                         {/* Role */}
                         <td className="py-3.5 px-4">
                           <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                              isDoctor
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : isNurse
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${isDoctor
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : isNurse
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                 : "bg-slate-100 text-slate-700 border border-slate-200"
-                            }`}
+                              }`}
                           >
                             {isDoctor && <Stethoscope className="w-3 h-3" />}
                             {isNurse && <span>👩‍⚕️</span>}
@@ -387,40 +385,40 @@ export default function AdminStaffPage() {
 
                         {/* Department / Spec / Area */}
                         <td className="py-3.5 px-4">
-                          <div className="font-medium text-slate-800">
+                          <div className="font-medium text-slate-900">
                             {isNurse
                               ? (s.chamber_location || s.department || "Home Care Nursing")
                               : (s.specialization || s.department || "General")}
                           </div>
-                          <div className="text-xs text-slate-400">{s.designation || s.qualifications || "-"}</div>
+                          <div className="text-xs text-slate-600">{s.designation || s.qualifications || "-"}</div>
                         </td>
 
                         {/* Consult / Shift Fee */}
                         <td className="py-3.5 px-4">
                           {isDoctor ? (
-                            <span className="font-mono font-semibold text-emerald-600">
+                            <span className="tabular-nums font-semibold text-emerald-700">
                               ৳{Number(s.consultation_fee ?? 1000).toFixed(2)}
                             </span>
                           ) : isNurse ? (
-                            <span className="font-mono font-semibold text-emerald-600">
+                            <span className="tabular-nums font-semibold text-emerald-700">
                               ৳{Number(s.consultation_fee ?? 1500).toFixed(2)}
-                              <span className="text-[10px] text-slate-400 font-sans font-normal"> / shift</span>
+                              <span className="text-[10px] text-slate-600 font-sans font-normal"> / shift</span>
                             </span>
                           ) : (
-                            <span className="text-slate-300">—</span>
+                            <span className="text-slate-400">—</span>
                           )}
                         </td>
 
                         {/* Follow-up Fee / Rate */}
                         <td className="py-3.5 px-4">
                           {isDoctor ? (
-                            <span className="font-mono text-slate-600">
+                            <span className="tabular-nums text-slate-700 font-medium">
                               ৳{Number(s.follow_up_fee ?? 500).toFixed(2)}
                             </span>
                           ) : isNurse ? (
-                            <span className="text-xs text-slate-400">Flat Visit</span>
+                            <span className="text-xs text-slate-600">Flat Visit</span>
                           ) : (
-                            <span className="text-slate-300">—</span>
+                            <span className="text-slate-400">—</span>
                           )}
                         </td>
 
@@ -547,6 +545,7 @@ export default function AdminStaffPage() {
                   >
                     <option value="DOCTOR">🩺 Doctor (Consultant)</option>
                     <option value="NURSE">👩‍⚕️ Home Care Nurse</option>
+                    <option value="LAB_ASSISTANT">🔬 Lab Assistant</option>
                     <option value="RECEPTIONIST">📋 Receptionist</option>
                     <option value="CLINIC_ADMIN">🛡️ Clinic Admin</option>
                   </select>
@@ -585,11 +584,10 @@ export default function AdminStaffPage() {
                           key={loc}
                           type="button"
                           onClick={() => setChamberLocation(loc)}
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                            chamberLocation.includes(loc)
-                              ? "bg-emerald-600 text-white"
-                              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
-                          }`}
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${chamberLocation.includes(loc)
+                            ? "bg-emerald-600 text-white"
+                            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
+                            }`}
                         >
                           {loc}
                         </button>
@@ -669,11 +667,10 @@ export default function AdminStaffPage() {
                             setSpecialization(cat);
                             setDepartment(cat);
                           }}
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                            specialization === cat
-                              ? "bg-emerald-600 text-white"
-                              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
-                          }`}
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${specialization === cat
+                            ? "bg-emerald-600 text-white"
+                            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
+                            }`}
                         >
                           {cat}
                         </button>
@@ -912,11 +909,10 @@ export default function AdminStaffPage() {
                           key={cat}
                           type="button"
                           onClick={() => setEditChamberLocation(cat)}
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                            editChamberLocation.includes(cat)
-                              ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                          }`}
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${editChamberLocation.includes(cat)
+                            ? "bg-emerald-600 text-white"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                            }`}
                         >
                           {cat}
                         </button>
@@ -978,11 +974,10 @@ export default function AdminStaffPage() {
                           key={cat}
                           type="button"
                           onClick={() => setEditSpecialization(cat)}
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                            editSpecialization === cat
-                              ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                          }`}
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${editSpecialization === cat
+                            ? "bg-emerald-600 text-white"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                            }`}
                         >
                           {cat}
                         </button>
@@ -1109,11 +1104,10 @@ export default function AdminStaffPage() {
                 <button
                   type="button"
                   onClick={() => setEditAvailability(!editAvailability)}
-                  className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
-                    editAvailability
-                      ? "bg-emerald-600 text-white"
-                      : "bg-slate-300 text-slate-700"
-                  }`}
+                  className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${editAvailability
+                    ? "bg-emerald-600 text-white"
+                    : "bg-slate-300 text-slate-700"
+                    }`}
                 >
                   {editAvailability ? "Bookable" : "Paused"}
                 </button>

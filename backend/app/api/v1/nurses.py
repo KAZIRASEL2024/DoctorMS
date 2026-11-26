@@ -3,9 +3,9 @@ import os
 import time
 import base64
 import uuid
-from typing import Optional, List
+from typing import Optional, List, Union, Any
 from datetime import date, datetime, timezone
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, model_validator
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +17,7 @@ from app.core.security import hash_password
 from app.models.user import User, ClinicStaff, SystemRole, ClinicRole
 from app.models.patient import Patient
 from app.models.tenant import Clinic
-from app.models.nurse import NurseProfile, NurseBooking, NurseBookingStatus
+from app.models.nurse import NurseProfile, NurseBooking, NurseBookingStatus, NurseReview
 from app.models.billing import Invoice, InvoiceItem, InvoiceStatus, InvoiceItemType
 
 router = APIRouter(tags=["Home Care Nurses & Bookings"])
@@ -41,6 +41,8 @@ class NurseProfileResponse(BaseModel):
     hourly_rate_bdt: float = 300.0
     bio: Optional[str] = None
     is_available: bool
+    average_rating: float = 0.0
+    total_reviews: int = 0
 
     class Config:
         from_attributes = True
@@ -73,11 +75,50 @@ class CreateNurseRequest(BaseModel):
 
 class CreateNurseBookingRequest(BaseModel):
     nurse_id: uuid.UUID
-    service_date: date
-    shift_time: str
-    contracted_hours: float = 4.0
-    patient_address: str
+    service_date: Union[date, str]
+    shift_time: Optional[str] = None
+    shift_details: Optional[str] = None
+    shift: Optional[str] = None
+    contracted_hours: Optional[float] = 4.0
+    hours: Optional[float] = None
+    patient_address: Optional[str] = None
+    address: Optional[str] = None
+    service_address: Optional[str] = None
     care_notes: Optional[str] = None
+    notes: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            # shift_time alias support
+            if not data.get("shift_time"):
+                data["shift_time"] = data.get("shift_details") or data.get("shift") or "Day Shift (8:00 AM - 4:00 PM)"
+
+            # contracted_hours alias support
+            if data.get("contracted_hours") is None and data.get("hours") is not None:
+                data["contracted_hours"] = data.get("hours")
+            try:
+                data["contracted_hours"] = float(data.get("contracted_hours") or 4.0)
+            except (ValueError, TypeError):
+                data["contracted_hours"] = 4.0
+
+            # patient_address alias support
+            if not data.get("patient_address"):
+                data["patient_address"] = data.get("address") or data.get("service_address") or data.get("location") or "Dhaka, Bangladesh"
+
+            # care_notes alias support
+            if not data.get("care_notes") and data.get("notes"):
+                data["care_notes"] = data.get("notes")
+
+            # service_date parsing if string
+            sd = data.get("service_date")
+            if isinstance(sd, str):
+                try:
+                    data["service_date"] = date.fromisoformat(sd.strip())
+                except Exception:
+                    pass
+        return data
 
 
 class NurseBookingResponse(BaseModel):
@@ -111,6 +152,9 @@ class NurseBookingResponse(BaseModel):
     overtime_due_bdt: float = 0.0
     overtime_invoice_id: Optional[uuid.UUID] = None
     overtime_invoice_number: Optional[str] = None
+    has_reviewed: bool = False
+    submitted_rating: Optional[int] = None
+    submitted_comment: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -120,12 +164,32 @@ class UpdateNurseBookingStatusRequest(BaseModel):
     status: str = Field(..., description="Confirmed, Completed, or Cancelled")
 
 
+class CreateNurseReviewRequest(BaseModel):
+    rating: int = Field(..., ge=1, le=5, description="1 to 5 star rating")
+    comment: Optional[str] = Field(None, max_length=1000, description="Optional patient review")
+
+
+class NurseReviewResponse(BaseModel):
+    id: uuid.UUID
+    booking_id: uuid.UUID
+    nurse_id: uuid.UUID
+    patient_id: uuid.UUID
+    patient_name: str
+    rating: int
+    comment: Optional[str] = None
+    average_rating: float
+    total_reviews: int
+    created_at: datetime
+
+
 # ------------------------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------------------------
-def map_nurse_profile_response(nurse: NurseProfile) -> NurseProfileResponse:
+def map_nurse_profile_response(nurse: NurseProfile, stats: Optional[dict] = None) -> NurseProfileResponse:
     rate = float(nurse.service_fee_bdt)
     hourly = round(rate / 4.0, 2) if rate >= 600 else rate
+    avg_r = float(stats["avg"] if stats and "avg" in stats else getattr(nurse, "average_rating", 0.0) or 0.0)
+    tot_r = int(stats["count"] if stats and "count" in stats else getattr(nurse, "total_reviews", 0) or 0)
     return NurseProfileResponse(
         id=nurse.id,
         user_id=nurse.user_id,
@@ -140,11 +204,17 @@ def map_nurse_profile_response(nurse: NurseProfile) -> NurseProfileResponse:
         service_fee_bdt=rate,
         hourly_rate_bdt=hourly,
         bio=nurse.bio,
-        is_available=nurse.is_available
+        is_available=nurse.is_available,
+        average_rating=round(avg_r, 1),
+        total_reviews=tot_r
     )
 
 
-def map_booking_response(b: NurseBooking) -> NurseBookingResponse:
+def map_booking_response(b: NurseBooking, review: Optional[NurseReview] = None) -> NurseBookingResponse:
+    rev = review if review is not None else getattr(b, "review", None)
+    has_rev = rev is not None
+    sub_rating = rev.rating if rev else None
+    sub_comment = rev.comment if rev else None
     return NurseBookingResponse(
         id=b.id,
         booking_code=b.booking_code,
@@ -175,7 +245,10 @@ def map_booking_response(b: NurseBooking) -> NurseBookingResponse:
         overtime_hours=float(b.overtime_hours or 0.0),
         overtime_due_bdt=float(b.overtime_due_bdt or 0.0),
         overtime_invoice_id=b.overtime_invoice_id,
-        overtime_invoice_number=b.overtime_invoice.invoice_number if getattr(b, "overtime_invoice", None) else None
+        overtime_invoice_number=b.overtime_invoice.invoice_number if getattr(b, "overtime_invoice", None) else None,
+        has_reviewed=has_rev,
+        submitted_rating=sub_rating,
+        submitted_comment=sub_comment
     )
 
 
@@ -196,7 +269,20 @@ async def list_public_nurses(
     stmt = stmt.order_by(NurseProfile.full_name.asc())
     res = await db.execute(stmt)
     profiles = res.scalars().all()
-    return [map_nurse_profile_response(p) for p in profiles]
+
+    # Aggregate rating stats per nurse
+    rev_stats_stmt = (
+        select(
+            NurseReview.nurse_id,
+            func.coalesce(func.avg(NurseReview.rating), 0.0).label("avg"),
+            func.count(NurseReview.id).label("cnt")
+        )
+        .group_by(NurseReview.nurse_id)
+    )
+    rev_stats_res = await db.execute(rev_stats_stmt)
+    stats_map = {row.nurse_id: {"avg": float(row.avg), "count": int(row.cnt)} for row in rev_stats_res}
+
+    return [map_nurse_profile_response(p, stats_map.get(p.id)) for p in profiles]
 
 
 @router.get("/public/nurses/{id}", response_model=NurseProfileResponse)
@@ -207,7 +293,14 @@ async def get_public_nurse(id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     nurse = res.scalar_one_or_none()
     if not nurse:
         raise HTTPException(status_code=404, detail="Nurse profile not found")
-    return map_nurse_profile_response(nurse)
+
+    stats_stmt = select(
+        func.coalesce(func.avg(NurseReview.rating), 0.0),
+        func.count(NurseReview.id)
+    ).where(NurseReview.nurse_id == nurse.id)
+    stats_res = await db.execute(stats_stmt)
+    avg_r, cnt_r = stats_res.one()
+    return map_nurse_profile_response(nurse, {"avg": float(avg_r), "count": int(cnt_r)})
 
 
 # ------------------------------------------------------------------------------
@@ -302,6 +395,19 @@ async def book_nurse(
     if not nurse:
         raise HTTPException(status_code=404, detail="Selected nurse profile not found")
 
+    # Resolve normalized request values
+    if isinstance(req.service_date, str):
+        try:
+            parsed_service_date = date.fromisoformat(req.service_date.strip())
+        except Exception:
+            parsed_service_date = date.today()
+    else:
+        parsed_service_date = req.service_date or date.today()
+
+    resolved_address = req.patient_address or "Dhaka, Bangladesh"
+    shift_time = req.shift_time or "Day Shift (8:00 AM - 4:00 PM)"
+    contracted_hours = float(req.contracted_hours or 4.0)
+
     # Find or auto-register patient profile for this user
     p_stmt = select(Patient).where(Patient.user_id == current_user.id, Patient.is_deleted == False)
     p_res = await db.execute(p_stmt)
@@ -312,24 +418,36 @@ async def book_nurse(
         clinic = c_res.scalar_one_or_none()
         clinic_id = nurse.clinic_id or (clinic.id if clinic else None)
         if not clinic_id:
-            raise HTTPException(status_code=500, detail="Clinic reference not found")
+            clinic = Clinic(name="Mir Health Hospital", code="CLINIC-01", is_active=True)
+            db.add(clinic)
+            await db.flush()
+            clinic_id = clinic.id
 
         count_res = await db.execute(select(func.count(Patient.id)))
-        total_p = count_res.scalar() or 0
-        mrn = f"MRN-{datetime.now().strftime('%Y%m')}-{total_p + 1:04d}"
+        total_p = (count_res.scalar() or 0) + 1
+        current_year = datetime.now().strftime("%Y")
+        mrn = f"MRN-{current_year}-{total_p:05d}"
 
+        first_name = current_user.first_name or "Patient"
+        last_name = current_user.last_name or str(current_user.id)[:8]
+        phone = current_user.phone or "01700000000"
+        email = current_user.email
+
+        from app.models.patient import Gender, BloodGroup
         patient = Patient(
             clinic_id=clinic_id,
             user_id=current_user.id,
             mrn=mrn,
-            first_name=current_user.first_name,
-            last_name=current_user.last_name,
-            phone=current_user.phone or "01700000000",
-            email=current_user.email,
-            address_line1=req.patient_address,
+            first_name=first_name,
+            last_name=last_name,
+            phone=phone,
+            email=email,
+            address_line=resolved_address,
             city="Dhaka",
-            gender="OTHER",
-            date_of_birth=date(1995, 1, 1)
+            gender=Gender.OTHER,
+            blood_group=BloodGroup.UNKNOWN,
+            date_of_birth=date(1995, 1, 1),
+            is_deleted=False
         )
         db.add(patient)
         await db.flush()
@@ -346,7 +464,6 @@ async def book_nurse(
 
     # Calculate contracted duration and hourly rate
     hourly_rate_bdt = round(float(nurse.service_fee_bdt) / 4.0, 2) if float(nurse.service_fee_bdt) >= 600 else float(nurse.service_fee_bdt)
-    contracted_hours = float(req.contracted_hours or 4.0)
     initial_total_bdt = round(contracted_hours * hourly_rate_bdt, 2)
     clinic_id = nurse.clinic_id or patient.clinic_id
 
@@ -357,7 +474,7 @@ async def book_nurse(
         invoice_number=invoice_number,
         status=InvoiceStatus.ISSUED,
         issue_date=date.today(),
-        due_date=req.service_date,
+        due_date=parsed_service_date,
         subtotal=initial_total_bdt,
         discount_amount=0.00,
         tax_rate_percent=0.00,
@@ -365,7 +482,7 @@ async def book_nurse(
         total_amount=initial_total_bdt,
         paid_amount=0.00,
         balance_amount=initial_total_bdt,
-        notes=f"Home Care Nursing by {nurse.full_name} on {req.service_date} ({req.shift_time}, {contracted_hours}h). Address: {req.patient_address}",
+        notes=f"Home Care Nursing by {nurse.full_name} on {parsed_service_date} ({shift_time}, {contracted_hours}h). Address: {resolved_address}",
         bill_type="Nurse Care Service",
         description=f"Home Nursing Care - {nurse.full_name} ({contracted_hours} hrs @ ৳{hourly_rate_bdt}/hr)",
         amount_bdt=initial_total_bdt,
@@ -381,7 +498,7 @@ async def book_nurse(
         invoice_id=invoice.id,
         item_type=InvoiceItemType.OTHER,
         description=f"Home Care Nursing - {nurse.full_name} ({contracted_hours}h @ ৳{hourly_rate_bdt}/hr)",
-        quantity=contracted_hours,
+        quantity=int(contracted_hours) if contracted_hours.is_integer() else contracted_hours,
         unit_price=hourly_rate_bdt,
         total_price=initial_total_bdt
     )
@@ -395,9 +512,9 @@ async def book_nurse(
         nurse_id=nurse.id,
         patient_id=patient.id,
         invoice_id=invoice.id,
-        service_date=req.service_date,
-        shift_time=req.shift_time,
-        patient_address=req.patient_address,
+        service_date=parsed_service_date,
+        shift_time=shift_time,
+        patient_address=resolved_address,
         care_notes=req.care_notes,
         fee_bdt=initial_total_bdt,
         contracted_hours=contracted_hours,
@@ -407,6 +524,12 @@ async def book_nurse(
         status="Pending"
     )
     db.add(booking)
+    await db.flush()
+
+    # Link invoice back to booking
+    invoice.nurse_booking_id = booking.id
+
+    # Commit cleanly in a single transaction
     await db.commit()
     await db.refresh(booking)
 
@@ -426,9 +549,10 @@ async def book_nurse(
 
 
 # ------------------------------------------------------------------------------
-# 4. Patient View Own Nurse Bookings
+# 4. Patient View Own Nurse Bookings & Submit Review
 # ------------------------------------------------------------------------------
 @router.get("/nurse-bookings/patient", response_model=List[NurseBookingResponse])
+@router.get("/patient/me/nurse-bookings", response_model=List[NurseBookingResponse])
 async def get_patient_nurse_bookings(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -437,6 +561,13 @@ async def get_patient_nurse_bookings(
     p_stmt = select(Patient).where(Patient.user_id == current_user.id, Patient.is_deleted == False)
     p_res = await db.execute(p_stmt)
     patient = p_res.scalar_one_or_none()
+    if not patient:
+        p_stmt2 = select(Patient).where(
+            or_(Patient.email == current_user.email, Patient.phone == current_user.phone),
+            Patient.is_deleted == False
+        )
+        p_res2 = await db.execute(p_stmt2)
+        patient = p_res2.scalars().first()
     if not patient:
         return []
 
@@ -447,13 +578,140 @@ async def get_patient_nurse_bookings(
             selectinload(NurseBooking.nurse),
             selectinload(NurseBooking.patient),
             selectinload(NurseBooking.invoice),
-            selectinload(NurseBooking.overtime_invoice)
+            selectinload(NurseBooking.overtime_invoice),
+            selectinload(NurseBooking.review)
         )
         .order_by(NurseBooking.created_at.desc())
     )
     res = await db.execute(stmt)
     bookings = res.scalars().all()
     return [map_booking_response(b) for b in bookings]
+
+
+@router.post("/nurse-bookings/{booking_id}/review", response_model=NurseReviewResponse, status_code=status.HTTP_201_CREATED)
+async def submit_nurse_review(
+    booking_id: uuid.UUID,
+    req: CreateNurseReviewRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Verified Patient submits a 1-5 star rating and optional feedback review
+    for a completed and paid nurse care service.
+    """
+    # 1. Fetch booking with nurse, patient, invoice, overtime_invoice, and review
+    stmt = (
+        select(NurseBooking)
+        .where(NurseBooking.id == booking_id)
+        .options(
+            selectinload(NurseBooking.nurse),
+            selectinload(NurseBooking.patient),
+            selectinload(NurseBooking.invoice),
+            selectinload(NurseBooking.overtime_invoice),
+            selectinload(NurseBooking.review)
+        )
+    )
+    res = await db.execute(stmt)
+    booking = res.scalar_one_or_none()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Nurse booking not found")
+
+    # 2. Check authorization
+    p_stmt = select(Patient).where(Patient.user_id == current_user.id, Patient.is_deleted == False)
+    p_res = await db.execute(p_stmt)
+    current_patient = p_res.scalar_one_or_none()
+    if not current_patient:
+        p_stmt2 = select(Patient).where(
+            or_(Patient.email == current_user.email, Patient.phone == current_user.phone),
+            Patient.is_deleted == False
+        )
+        p_res2 = await db.execute(p_stmt2)
+        current_patient = p_res2.scalars().first()
+
+    if current_user.system_role != SystemRole.SUPER_ADMIN:
+        if not current_patient:
+            raise HTTPException(status_code=403, detail="Only registered patients can submit nurse reviews")
+        if booking.patient_id != current_patient.id:
+            raise HTTPException(status_code=403, detail="You can only submit reviews for your own bookings")
+
+    # 3. Check payment status
+    # Base fee payment status check
+    is_base_paid = (booking.payment_status == "Paid") or (booking.invoice and (booking.invoice.payment_status == "Paid" or float(booking.invoice.due_amount_bdt or 0.0) <= 0))
+    if not is_base_paid:
+        raise HTTPException(
+            status_code=400,
+            detail="Nurse booking service payment must be completed ('Paid') before submitting a review"
+        )
+
+    # Overtime invoice check if overtime was incurred
+    if float(booking.overtime_due_bdt or 0.0) > 0:
+        ot_is_paid = (booking.overtime_invoice and (booking.overtime_invoice.payment_status == "Paid" or float(booking.overtime_invoice.due_amount_bdt or 0.0) <= 0))
+        if not ot_is_paid:
+            raise HTTPException(
+                status_code=400,
+                detail="Overtime fee is still pending. Please pay the overtime invoice before submitting a review"
+            )
+
+    # 4. Check if already reviewed
+    if booking.review is not None:
+        raise HTTPException(status_code=400, detail="A review has already been submitted for this booking")
+
+    exist_check = await db.execute(select(NurseReview).where(NurseReview.booking_id == booking.id))
+    if exist_check.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="A review has already been submitted for this booking")
+
+    # 5. Resolve patient display name
+    p_name = None
+    if booking.patient:
+        p_name = f"{booking.patient.first_name} {booking.patient.last_name}".strip()
+    elif current_patient:
+        p_name = f"{current_patient.first_name} {current_patient.last_name}".strip()
+    else:
+        p_name = f"{current_user.first_name} {current_user.last_name}".strip() or "Verified Patient"
+
+    # 6. Save review
+    review = NurseReview(
+        clinic_id=booking.clinic_id,
+        booking_id=booking.id,
+        nurse_id=booking.nurse_id,
+        patient_id=booking.patient_id,
+        patient_name=p_name,
+        rating=req.rating,
+        comment=req.comment.strip() if req.comment else None
+    )
+    db.add(review)
+    await db.flush()
+
+    # 7. Recalculate average rating & total reviews
+    stats_stmt = select(
+        func.coalesce(func.avg(NurseReview.rating), 0.0),
+        func.count(NurseReview.id)
+    ).where(NurseReview.nurse_id == booking.nurse_id)
+    stats_res = await db.execute(stats_stmt)
+    avg_val, cnt_val = stats_res.one()
+
+    nurse = await db.get(NurseProfile, booking.nurse_id)
+    if nurse:
+        nurse.average_rating = round(float(avg_val), 1)
+        nurse.total_reviews = int(cnt_val)
+
+    await db.commit()
+    await db.refresh(review)
+    if nurse:
+        await db.refresh(nurse)
+
+    return NurseReviewResponse(
+        id=review.id,
+        booking_id=review.booking_id,
+        nurse_id=review.nurse_id,
+        patient_id=review.patient_id,
+        patient_name=review.patient_name,
+        rating=review.rating,
+        comment=review.comment,
+        average_rating=float(nurse.average_rating) if nurse else float(review.rating),
+        total_reviews=int(nurse.total_reviews) if nurse else 1,
+        created_at=review.created_at
+    )
 
 
 # ------------------------------------------------------------------------------
@@ -476,7 +734,8 @@ async def get_nurse_me_bookings(
                     selectinload(NurseBooking.nurse),
                     selectinload(NurseBooking.patient),
                     selectinload(NurseBooking.invoice),
-                    selectinload(NurseBooking.overtime_invoice)
+                    selectinload(NurseBooking.overtime_invoice),
+                    selectinload(NurseBooking.review)
                 )
                 .order_by(NurseBooking.created_at.desc())
             )
@@ -493,7 +752,8 @@ async def get_nurse_me_bookings(
             selectinload(NurseBooking.nurse),
             selectinload(NurseBooking.patient),
             selectinload(NurseBooking.invoice),
-            selectinload(NurseBooking.overtime_invoice)
+            selectinload(NurseBooking.overtime_invoice),
+            selectinload(NurseBooking.review)
         )
         .order_by(NurseBooking.created_at.desc())
     )
@@ -735,7 +995,14 @@ async def get_nurse_me_profile(
         nurse = first_res.scalar_one_or_none()
     if not nurse:
         raise HTTPException(status_code=404, detail="Nurse profile not found")
-    return map_nurse_profile_response(nurse)
+
+    stats_stmt = select(
+        func.coalesce(func.avg(NurseReview.rating), 0.0),
+        func.count(NurseReview.id)
+    ).where(NurseReview.nurse_id == nurse.id)
+    stats_res = await db.execute(stats_stmt)
+    avg_r, cnt_r = stats_res.one()
+    return map_nurse_profile_response(nurse, {"avg": float(avg_r), "count": int(cnt_r)})
 
 
 @router.put("/nurse/me/profile", response_model=NurseProfileResponse)
@@ -778,7 +1045,14 @@ async def update_nurse_profile(
 
     await db.commit()
     await db.refresh(nurse)
-    return map_nurse_profile_response(nurse)
+
+    stats_stmt = select(
+        func.coalesce(func.avg(NurseReview.rating), 0.0),
+        func.count(NurseReview.id)
+    ).where(NurseReview.nurse_id == nurse.id)
+    stats_res = await db.execute(stats_stmt)
+    avg_r, cnt_r = stats_res.one()
+    return map_nurse_profile_response(nurse, {"avg": float(avg_r), "count": int(cnt_r)})
 
 
 @router.patch("/nurse/me/availability")

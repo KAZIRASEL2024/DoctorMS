@@ -14,7 +14,7 @@ from app.models.appointment import (
     Appointment, QueueToken, AppointmentStatus, AppointmentType, QueueStatus
 )
 from app.models.emr import (
-    Encounter, VitalSign, SoapNote, ClinicalDiagnosis, DiagnosisType, DiagnosisStatus, LabReport
+    Encounter, VitalSign, SoapNote, ClinicalDiagnosis, DiagnosisType, DiagnosisStatus, LabReport, LabTest, PatientLabReport
 )
 from app.models.prescription import (
     MedicineMaster, Prescription, PrescriptionItem, DosageForm, MealTiming
@@ -24,12 +24,13 @@ from app.models.billing import (
 )
 from app.models.settings import WebsiteSettings
 from app.models.unit import HospitalUnit
-from app.models.nurse import NurseProfile, NurseBooking, NurseBookingStatus
+from app.models.nurse import NurseProfile, NurseBooking, NurseBookingStatus, NurseReview
 
 __all__ = [
     "NurseProfile",
     "NurseBooking",
     "NurseBookingStatus",
+    "NurseReview",
     "HospitalUnit",
     "Base",
     "TimestampMixin",
@@ -66,6 +67,8 @@ __all__ = [
     "DiagnosisType",
     "DiagnosisStatus",
     "LabReport",
+    "LabTest",
+    "PatientLabReport",
     "MedicineMaster",
     "Prescription",
     "PrescriptionItem",

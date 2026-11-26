@@ -252,8 +252,8 @@ export default function BillingPage() {
         <div className="flex items-center gap-4">
           <BackButton fallbackHref="/dashboard" />
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Hospital Revenue & Billing Desk</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Hospital Revenue & Billing Desk</h1>
+            <p className="text-sm text-slate-600 mt-0.5">
               Manage doctor visit charges, bed & ICU admission approvals, and instant payment collections in BDT (৳).
             </p>
           </div>
@@ -277,52 +277,52 @@ export default function BillingPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Invoices</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Invoices</span>
             <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
               <FileText className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2 font-mono">{metrics.count}</div>
-          <p className="text-[11px] text-slate-500 mt-1">Itemized clinical records</p>
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums">{metrics.count}</div>
+          <p className="text-[11px] text-slate-600 mt-1">Itemized clinical records</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Billed</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Billed</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
               ৳
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2 font-mono">
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums">
             ৳{metrics.totalBilled.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Doctor visits & admission totals</p>
+          <p className="text-[11px] text-slate-600 mt-1">Doctor visits & admission totals</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Collected Revenue</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Collected Revenue</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-emerald-600 mt-2 font-mono">
+          <div className="text-2xl sm:text-3xl font-bold text-emerald-700 mt-2 tabular-nums">
             ৳{metrics.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <p className="text-[11px] text-emerald-700 font-medium mt-1">Settled & verified at reception</p>
+          <p className="text-[11px] text-emerald-800 font-medium mt-1">Settled & verified at reception</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Outstanding Dues</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Outstanding Dues</span>
             <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
               <AlertCircle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-rose-600 mt-2 font-mono">
+          <div className="text-2xl sm:text-3xl font-bold text-rose-700 mt-2 tabular-nums">
             ৳{metrics.totalDue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <p className="text-[11px] text-rose-600 font-medium mt-1">Pending patient payment</p>
+          <p className="text-[11px] text-rose-800 font-medium mt-1">Pending patient payment</p>
         </div>
       </div>
 

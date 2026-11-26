@@ -21,6 +21,7 @@ import {
   Save,
   Clock,
   Sparkles,
+  Star,
 } from "lucide-react";
 import { BackButton } from "@/components/ui/back-button";
 import { LiveDutyTimer } from "@/components/nurse/live-duty-timer";
@@ -229,13 +230,13 @@ export default function NurseProfilePage() {
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Nurse Account Settings
               </span>
-              <span className="text-xs text-slate-400 font-mono">Profile v2.0</span>
+              <span className="text-xs text-slate-500 font-sans">Profile v2.0</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1 flex items-center gap-2">
               <User className="w-6 h-6 text-emerald-600" />
               <span>My Nurse Profile & DP</span>
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-sm text-slate-600 mt-0.5">
               Update your public photo, qualifications, service coverage area, and shift rates.
             </p>
           </div>
@@ -309,9 +310,23 @@ export default function NurseProfilePage() {
               </div>
 
               <div className="space-y-1.5 text-center sm:text-left flex-1">
-                <h3 className="font-bold text-base text-slate-900">
-                  {profile?.full_name || `${user?.first_name} ${user?.last_name}`}
-                </h3>
+                <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                  <h3 className="font-bold text-base text-slate-900">
+                    {profile?.full_name || `${user?.first_name} ${user?.last_name}`}
+                  </h3>
+                  {profile?.total_reviews && profile.total_reviews > 0 ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                      <span>★ {Number(profile.average_rating || 5.0).toFixed(1)}</span>
+                      <span className="font-normal text-amber-700">({profile.total_reviews} reviews)</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                      <Star className="w-3 h-3 text-slate-400" />
+                      <span>★ No reviews yet</span>
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-slate-500 max-w-md">
                   Upload a professional medical photo. This photo is visible to patients booking home nursing care and appears on verified booking cards.
                 </p>

@@ -7,10 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.core.deps import get_current_user, get_current_tenant, require_roles, TenantContext
+from app.core.deps import get_current_user, get_current_tenant, require_roles, TenantContext, log_audit_event
 from app.models.settings import WebsiteSettings
 from app.models.tenant import Clinic
-from app.models.user import ClinicRole, SystemRole, User
+from app.models.user import ClinicRole, SystemRole, User, AuditAction
 from app.schemas.settings import (
     WebsiteSettingsUpdate, WebsiteSettingsResponse, LogoUploadResponse
 )
@@ -43,11 +43,31 @@ async def get_or_create_settings(db: AsyncSession, clinic_id: Optional[uuid.UUID
             address=f"{first_clinic.address_line1}, {first_clinic.city}" if first_clinic else "100 Medical Plaza, Suite 400, Dhaka",
             hero_title="World-Class Healthcare, Close to You",
             hero_subtitle="Experience seamless medical appointments, digital prescriptions, and expert diagnostics from top certified specialists.",
-            logo_url=None
+            logo_url=None,
+            theme_preset="signature-green",
+            primary_color="#059669",
+            button_color="#047857",
+            tint_color="#ECFDF5",
+            background_color="#FFFFFF",
+            text_color="#0F172A",
         )
         db.add(settings_obj)
         await db.commit()
         await db.refresh(settings_obj)
+
+    # Safe fallback if fields are missing or null on existing db rows
+    if not getattr(settings_obj, "primary_color", None):
+        settings_obj.primary_color = "#059669"
+    if not getattr(settings_obj, "button_color", None):
+        settings_obj.button_color = "#047857"
+    if not getattr(settings_obj, "tint_color", None):
+        settings_obj.tint_color = "#ECFDF5"
+    if not getattr(settings_obj, "background_color", None):
+        settings_obj.background_color = "#FFFFFF"
+    if not getattr(settings_obj, "text_color", None):
+        settings_obj.text_color = "#0F172A"
+    if not getattr(settings_obj, "theme_preset", None):
+        settings_obj.theme_preset = "signature-green"
 
     return settings_obj
 
@@ -95,18 +115,39 @@ async def update_website_settings(
         if val is not None:
             setattr(settings_obj, field, val)
 
-    # Sync with clinic table if hospital_name changed
-    if request.hospital_name and settings_obj.clinic_id:
+    # Sync with clinic table if hospital_name, logo_url, or primary_color changed
+    if settings_obj.clinic_id:
         c_stmt = select(Clinic).where(Clinic.id == settings_obj.clinic_id)
         c_res = await db.execute(c_stmt)
         clinic = c_res.scalar_one_or_none()
         if clinic:
-            clinic.name = request.hospital_name
+            if request.hospital_name:
+                clinic.name = request.hospital_name
             if request.logo_url:
                 clinic.logo_url = request.logo_url
+            if request.primary_color and isinstance(clinic.letterhead_template, dict):
+                tmpl = dict(clinic.letterhead_template)
+                tmpl["primary_color"] = request.primary_color
+                clinic.letterhead_template = tmpl
 
     await db.commit()
     await db.refresh(settings_obj)
+
+    # HIPAA / Admin Audit Trail Logging
+    try:
+        await log_audit_event(
+            db=db,
+            action=AuditAction.UPDATE,
+            action_title="Updated Clinic Theme & Profile",
+            resource_type="Clinic Profile & Settings",
+            resource_id=str(settings_obj.id),
+            clinic_id=settings_obj.clinic_id,
+            user=current_user,
+            details=f"Updated hospital: '{settings_obj.hospital_name}', theme preset: '{settings_obj.theme_preset}', primary: '{settings_obj.primary_color}', logo: {'updated' if request.logo_url else 'unchanged'}",
+        )
+    except Exception as e:
+        print(f"[Audit Log Warning] {e}")
+
     return settings_obj
 
 
@@ -151,4 +192,20 @@ async def upload_hospital_logo(
             clinic.logo_url = resolved_logo_url
 
     await db.commit()
+
+    # HIPAA / Admin Audit Trail Logging
+    try:
+        await log_audit_event(
+            db=db,
+            action=AuditAction.UPDATE,
+            action_title="Uploaded Clinic Logo",
+            resource_type="Clinic Profile & Settings",
+            resource_id="logo",
+            clinic_id=settings_obj.clinic_id,
+            user=current_user,
+            details=f"Uploaded new clinic logo emblem for '{settings_obj.hospital_name}'",
+        )
+    except Exception as e:
+        print(f"[Audit Log Warning] {e}")
+
     return LogoUploadResponse(logo_url=resolved_logo_url)

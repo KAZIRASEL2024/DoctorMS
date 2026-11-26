@@ -18,6 +18,7 @@ import {
   Trash2,
   ShieldAlert,
   ArrowRight,
+  Palette,
 } from "lucide-react";
 import Link from "next/link";
 import { BackButton } from "@/components/ui/back-button";
@@ -34,6 +35,12 @@ interface SettingsData {
   hero_subtitle: string;
   logo_url?: string | null;
   hero_image_url?: string | null;
+  theme_preset?: string;
+  primary_color?: string;
+  button_color?: string;
+  tint_color?: string;
+  background_color?: string;
+  text_color?: string;
 }
 
 export default function WebsiteSettingsPage() {
@@ -187,23 +194,32 @@ export default function WebsiteSettingsPage() {
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Super Admin Control
               </span>
-              <span className="text-xs text-slate-400">• Live Public Portal</span>
+              <span className="text-xs text-slate-500">• Live Public Portal</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mt-1">Website Branding & Logo CMS</h1>
-            <p className="text-xs text-slate-500">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1">Website Branding & Logo CMS</h1>
+            <p className="text-sm text-slate-600 mt-0.5">
               Customize the hospital name, uploaded logo, emergency hotline, and hero showcase. Changes immediately apply to the Landing Page, Login, Navbar, and PDF Prescriptions.
             </p>
           </div>
         </div>
 
-        <Link
-          href="/"
-          target="_blank"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition"
-        >
-          <Eye className="w-4 h-4" />
-          <span>View Public Landing Page</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/settings"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold hover:bg-emerald-100/70 transition"
+          >
+            <Palette className="w-4 h-4" />
+            <span>Theme & Letterhead Palettes</span>
+          </Link>
+          <Link
+            href="/"
+            target="_blank"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition"
+          >
+            <Eye className="w-4 h-4" />
+            <span>View Public Site</span>
+          </Link>
+        </div>
       </div>
 
       {successMessage && (

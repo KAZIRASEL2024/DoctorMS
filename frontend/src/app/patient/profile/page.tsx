@@ -213,6 +213,7 @@ export default function PatientProfilePage() {
       const updated = await res.json();
       if (typeof window !== "undefined" && updated.user) {
         localStorage.setItem("user_info", JSON.stringify(updated.user));
+        localStorage.setItem("user", JSON.stringify(updated.user));
       }
       setSuccessMessage("Your profile information has been successfully updated!");
     } catch (err: any) {
@@ -238,13 +239,13 @@ export default function PatientProfilePage() {
         <div className="flex items-center gap-3">
           <BackButton fallbackHref="/patient/dashboard" />
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Patient Medical Profile</h1>
-            <p className="text-xs text-slate-500">Manage your demographics, baseline health records, and contact details</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Patient Medical Profile</h1>
+            <p className="text-sm text-slate-600 mt-0.5">Manage your demographics, baseline health records, and contact details</p>
           </div>
         </div>
 
         {mrn && (
-          <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-mono font-bold">
+          <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-sans tabular-nums font-bold">
             MRN: {mrn}
           </div>
         )}

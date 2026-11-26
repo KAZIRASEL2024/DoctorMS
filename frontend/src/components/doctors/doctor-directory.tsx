@@ -294,13 +294,13 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
                 {/* Bottom Pricing & Action */}
                 <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
                   <div>
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                       Consultation Fee
                     </span>
-                    <div className="text-xl font-extrabold text-slate-900 leading-tight">
+                    <div className="text-xl font-extrabold text-slate-900 leading-tight tabular-nums">
                       ৳ {consultFee.toLocaleString()}
                     </div>
-                    <span className="text-[10px] text-slate-400">Follow-up: ৳ {followFee.toLocaleString()}</span>
+                    <span className="text-[10px] text-slate-500 tabular-nums">Follow-up: ৳ {followFee.toLocaleString()}</span>
                   </div>
 
                   <button

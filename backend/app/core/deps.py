@@ -1,6 +1,6 @@
 """FastAPI Dependency Injection: Authentication, Multi-Tenant Context & RBAC."""
 import uuid
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Any
 from fastapi import Depends, HTTPException, Header, Query, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
@@ -221,27 +221,96 @@ def require_roles(allowed_roles: List[ClinicRole | SystemRole]) -> Callable:
 
 async def log_audit_event(
     db: AsyncSession,
-    action: AuditAction,
-    resource_type: str,
+    action: Any = AuditAction.UPDATE,
+    resource_type: str = "System",
     resource_id: Optional[str] = None,
     clinic_id: Optional[uuid.UUID] = None,
     user_id: Optional[uuid.UUID] = None,
     patient_id: Optional[uuid.UUID] = None,
     ip_address: Optional[str] = None,
     user_agent: Optional[str] = None,
-    payload_diff: Optional[dict] = None
+    payload_diff: Optional[dict] = None,
+    actor_name: Optional[str] = None,
+    actor_email: Optional[str] = None,
+    actor_role: Optional[str] = None,
+    action_title: Optional[str] = None,
+    details: Optional[str] = None,
+    user: Optional[User] = None,
 ):
-    """Creates a tamper-evident audit log record for HIPAA/GDPR compliance."""
+    """Creates a tamper-evident audit log record for HIPAA/GDPR compliance with rich actor tracking."""
+    # Resolve actor details from User object if passed
+    if user:
+        user_id = user_id or user.id
+        first = user.first_name or ""
+        last = user.last_name or ""
+        actor_name = actor_name or f"{first} {last}".strip()
+        actor_email = actor_email or user.email
+        actor_role = actor_role or (
+            user.system_role.value if hasattr(user.system_role, "value") else str(user.system_role or "SUPER_ADMIN")
+        )
+
+    # Normalize action enum
+    enum_action = AuditAction.UPDATE
+    if isinstance(action, AuditAction):
+        enum_action = action
+    elif isinstance(action, str):
+        normalized = action.strip().upper()
+        if hasattr(AuditAction, normalized):
+            enum_action = getattr(AuditAction, normalized)
+        else:
+            enum_action = AuditAction.UPDATE
+        if not action_title:
+            action_title = action
+
+    if not action_title:
+        action_title = enum_action.value if hasattr(enum_action, "value") else str(enum_action)
+
+    if not details and payload_diff:
+        import json
+        try:
+            details = json.dumps(payload_diff)
+        except Exception:
+            details = str(payload_diff)
+
+    # Sanitize types for multi-backend (SQLite & PostgreSQL) compatibility
+    safe_resource_id = str(resource_id) if resource_id is not None else None
+    safe_patient_id = patient_id
+    if safe_patient_id is not None and not isinstance(safe_patient_id, uuid.UUID):
+        try:
+            safe_patient_id = uuid.UUID(str(safe_patient_id))
+        except Exception:
+            safe_patient_id = None
+
+    safe_user_id = user_id
+    if safe_user_id is not None and not isinstance(safe_user_id, uuid.UUID):
+        try:
+            safe_user_id = uuid.UUID(str(safe_user_id))
+        except Exception:
+            pass
+
+    safe_clinic_id = clinic_id
+    if safe_clinic_id is not None and not isinstance(safe_clinic_id, uuid.UUID):
+        try:
+            safe_clinic_id = uuid.UUID(str(safe_clinic_id))
+        except Exception:
+            pass
+
     log_entry = AuditLog(
-        clinic_id=clinic_id,
-        user_id=user_id,
-        action=action,
+        clinic_id=safe_clinic_id,
+        user_id=safe_user_id,
+        action=enum_action,
         resource_type=resource_type,
-        resource_id=resource_id,
-        patient_id=patient_id,
-        ip_address=ip_address,
-        user_agent=user_agent,
-        payload_diff=payload_diff
+        resource_id=safe_resource_id,
+        patient_id=safe_patient_id,
+        ip_address=ip_address or "127.0.0.1",
+        user_agent=user_agent or "DoctorMS-WebClient/2.0",
+        payload_diff=payload_diff,
+        actor_name=actor_name,
+        actor_email=actor_email,
+        actor_role=actor_role or "STAFF",
+        action_title=action_title,
+        details=details or f"{action_title} on {resource_type}",
     )
     db.add(log_entry)
     await db.commit()
+    return log_entry

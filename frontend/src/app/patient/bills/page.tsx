@@ -17,12 +17,14 @@ import {
   Building2,
   Eye,
   HeartPulse,
+  Star,
 } from "lucide-react";
 import { BackButton } from "@/components/ui/back-button";
 import {
   InvoiceReceiptModal,
   InvoiceModalData,
 } from "@/components/billing/invoice-receipt-modal";
+import { NurseRatingModal } from "@/components/nurse/nurse-rating-modal";
 
 interface PatientInvoice {
   id: string;
@@ -36,6 +38,9 @@ interface PatientInvoice {
   doctor_specialty?: string;
   chamber_location?: string;
   unit_code?: string;
+  nurse_booking_id?: string;
+  has_reviewed?: boolean;
+  submitted_rating?: number;
   bill_type: string;
   description: string;
   amount_bdt: number;
@@ -55,6 +60,7 @@ export default function PatientBillsPage() {
   const [filter, setFilter] = useState<"ALL" | "DUE" | "PAID">("ALL");
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
   const [receiptModalMode, setReceiptModalMode] = useState<"DETAILS" | "PRINT">("DETAILS");
+  const [ratingTargetInvoice, setRatingTargetInvoice] = useState<PatientInvoice | null>(null);
 
   // Fetch patient invoices
   const {
@@ -84,8 +90,8 @@ export default function PatientBillsPage() {
         <div className="flex items-center gap-4">
           <BackButton fallbackHref="/patient/dashboard" />
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Bills & Payment Receipts</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Bills & Payment Receipts</h1>
+            <p className="text-sm text-slate-600 mt-0.5">
               Review your hospital consultations, bed charges, and official printable tax receipts.
             </p>
           </div>
@@ -103,7 +109,7 @@ export default function PatientBillsPage() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Outstanding Dues
             </span>
             <div
@@ -115,13 +121,13 @@ export default function PatientBillsPage() {
             </div>
           </div>
           <div
-            className={`text-2xl font-bold mt-2 font-mono ${
+            className={`text-2xl sm:text-3xl font-bold mt-2 tabular-nums ${
               totalDue > 0 ? "text-rose-700" : "text-emerald-700"
             }`}
           >
             ৳{totalDue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-[11px] text-slate-600 mt-1">
             {totalDue > 0 ? "Payable at hospital reception" : "All medical accounts cleared"}
           </p>
         </div>
@@ -129,31 +135,31 @@ export default function PatientBillsPage() {
         {/* Total Paid */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Total Paid
             </span>
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2 font-mono">
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums">
             ৳{totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
-          <p className="text-[11px] text-emerald-700 font-medium mt-1">Verified payments</p>
+          <p className="text-[11px] text-emerald-800 font-medium mt-1">Verified payments</p>
         </div>
 
         {/* Total Invoices */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Total Invoices
             </span>
             <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
               <FileText className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2 font-mono">{invoices.length}</div>
-          <p className="text-[11px] text-slate-500 mt-1">Visits & admissions billed</p>
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums">{invoices.length}</div>
+          <p className="text-[11px] text-slate-600 mt-1">Visits & admissions billed</p>
         </div>
       </div>
 
@@ -317,6 +323,29 @@ export default function PatientBillsPage() {
 
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-2 justify-end">
+                          {/* Rate Nurse Button if this is a paid nurse service invoice */}
+                          {inv.nurse_booking_id && isPaid && !inv.has_reviewed && (
+                            <button
+                              type="button"
+                              onClick={() => setRatingTargetInvoice(inv)}
+                              style={{
+                                backgroundColor: "var(--brand-button, #059669)",
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white hover:opacity-95 rounded-xl text-xs font-semibold shadow-xs transition active:scale-95"
+                              title="Rate Nurse Service"
+                            >
+                              <Star className="w-3.5 h-3.5 fill-white" />
+                              <span>Rate Nurse ★</span>
+                            </button>
+                          )}
+
+                          {inv.nurse_booking_id && inv.has_reviewed && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                              <span>★ {Number(inv.submitted_rating || 5).toFixed(1)}</span>
+                            </span>
+                          )}
+
                           <button
                             type="button"
                             onClick={() => {
@@ -359,6 +388,18 @@ export default function PatientBillsPage() {
           invoice={selectedInvoice}
           initialMode={receiptModalMode}
           onClose={() => setSelectedInvoice(null)}
+        />
+      )}
+
+      {/* Verified Patient Nurse Rating Modal */}
+      {ratingTargetInvoice && ratingTargetInvoice.nurse_booking_id && (
+        <NurseRatingModal
+          bookingId={ratingTargetInvoice.nurse_booking_id}
+          nurseName={ratingTargetInvoice.doctor_name || "Assigned Nurse"}
+          onClose={() => setRatingTargetInvoice(null)}
+          onSuccess={() => {
+            refetch();
+          }}
         />
       )}
     </div>

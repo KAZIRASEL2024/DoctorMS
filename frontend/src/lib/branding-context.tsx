@@ -12,7 +12,38 @@ export interface WebsiteSettings {
   hero_subtitle?: string;
   logo_url?: string | null;
   hero_image_url?: string | null;
+  theme_preset?: string;
+  primary_color?: string;
+  button_color?: string;
+  tint_color?: string;
+  background_color?: string;
+  text_color?: string;
 }
+
+export const DEFAULT_BRAND_COLORS = {
+  theme_preset: "signature-green",
+  primary_color: "#059669",
+  button_color: "#047857",
+  tint_color: "#ECFDF5",
+  background_color: "#FFFFFF",
+  text_color: "#0F172A",
+};
+
+export const applyBrandStyles = (data?: Partial<WebsiteSettings> | null) => {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  const primary = data?.primary_color || DEFAULT_BRAND_COLORS.primary_color;
+  const button = data?.button_color || DEFAULT_BRAND_COLORS.button_color;
+  const tint = data?.tint_color || DEFAULT_BRAND_COLORS.tint_color;
+  const bg = data?.background_color || DEFAULT_BRAND_COLORS.background_color;
+  const text = data?.text_color || DEFAULT_BRAND_COLORS.text_color;
+
+  root.style.setProperty("--brand-primary", primary);
+  root.style.setProperty("--brand-button", button);
+  root.style.setProperty("--brand-tint", tint);
+  root.style.setProperty("--brand-bg", bg);
+  root.style.setProperty("--brand-text", text);
+};
 
 interface BrandingContextType {
   settings: WebsiteSettings | null;
@@ -68,6 +99,7 @@ export const BrandingProvider: React.FC<{
         }
       }
       applyBrandingMeta(merged);
+      applyBrandStyles(merged);
       return merged;
     });
   }, [applyBrandingMeta]);
@@ -82,6 +114,7 @@ export const BrandingProvider: React.FC<{
           setSettings(parsed);
           setIsLoading(false);
           applyBrandingMeta(parsed);
+          applyBrandStyles(parsed);
         }
       } catch (e) {
         console.error("Failed to parse cached branding from localStorage", e);
@@ -92,6 +125,7 @@ export const BrandingProvider: React.FC<{
         localStorage.setItem(STORAGE_KEY, JSON.stringify(initialBranding));
       } catch (e) {}
       applyBrandingMeta(initialBranding);
+      applyBrandStyles(initialBranding);
     }
 
     // Background SWR fetch to sync fresh CMS settings silently
@@ -111,6 +145,7 @@ export const BrandingProvider: React.FC<{
             console.error("Failed to cache fresh settings", e);
           }
           applyBrandingMeta(freshData);
+          applyBrandStyles(freshData);
         } else {
           if (isMounted) setIsLoading(false);
         }
@@ -129,6 +164,7 @@ export const BrandingProvider: React.FC<{
           const updated = JSON.parse(e.newValue);
           setSettings(updated);
           applyBrandingMeta(updated);
+          applyBrandStyles(updated);
         } catch (err) {}
       }
     };

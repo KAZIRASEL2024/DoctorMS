@@ -90,7 +90,10 @@ export default function PatientsListPage() {
           newResultSummary || `Uploaded ${uploadedFile.name} for diagnostic review.`
         );
 
-        const token = localStorage.getItem("token");
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("access_token") || localStorage.getItem("token")
+            : "";
         const res = await fetch(`/api/v1/patients/${selectedPatientId}/lab-reports/upload`, {
           method: "POST",
           headers: {
@@ -133,11 +136,11 @@ export default function PatientsListPage() {
         <div className="flex items-center gap-3">
           <BackButton fallbackHref="/dashboard" />
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
               <User className="w-6 h-6 text-emerald-600" />
               Patient Records & Medical Histories
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 mt-0.5">
               Patients under your care, medical histories, and diagnostic lab reports.
             </p>
           </div>
@@ -164,8 +167,8 @@ export default function PatientsListPage() {
               className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500"
             />
           </div>
-          <span className="text-xs text-slate-500 font-medium">
-            Total Patients Under Care: <strong>{patients.length}</strong>
+          <span className="text-xs text-slate-600 font-medium">
+            Total Patients Under Care: <strong className="text-slate-900">{patients.length}</strong>
           </span>
         </div>
 
@@ -183,7 +186,7 @@ export default function PatientsListPage() {
           <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <table className="min-w-[750px] w-full text-left text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-600 whitespace-nowrap">
                   <th className="py-3 px-4 whitespace-nowrap sticky left-0 bg-slate-50 z-10 shadow-xs">MRN</th>
                   <th className="py-3 px-4 whitespace-nowrap">Patient Name</th>
                   <th className="py-3 px-4 whitespace-nowrap">Gender & DOB</th>
@@ -198,13 +201,13 @@ export default function PatientsListPage() {
                 const labCount = p.lab_reports_count || 0;
                 return (
                   <tr key={p.id} className="hover:bg-slate-50/80">
-                    <td className="py-3.5 px-4 font-mono font-bold text-emerald-700 text-xs sticky left-0 bg-white z-10 shadow-xs">{p.mrn}</td>
+                    <td className="py-3.5 px-4 tabular-nums font-bold text-emerald-700 text-xs sticky left-0 bg-white z-10 shadow-xs">{p.mrn}</td>
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-800">
+                      <div className="font-semibold text-slate-900">
                         {p.first_name} {p.last_name}
                       </div>
-                      <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
-                        <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+                      <div className="text-xs text-slate-600 flex items-center gap-1.5 mt-0.5">
+                        <Mail className="w-3 h-3 text-slate-500 shrink-0" />
                         <span className="truncate">{p.email || "No login email"}</span>
                       </div>
                       {labCount > 0 && (

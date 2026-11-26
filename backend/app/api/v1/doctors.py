@@ -12,9 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db
-from app.core.deps import get_current_tenant, get_current_user, require_roles, TenantContext
+from app.core.deps import get_current_tenant, get_current_user, require_roles, TenantContext, log_audit_event
 from app.models.doctor import DoctorProfile, DoctorSchedule, DoctorBreak, DoctorLeave, LeaveStatus
-from app.models.user import User, ClinicStaff, ClinicRole, SystemRole
+from app.models.user import User, ClinicStaff, ClinicRole, SystemRole, AuditAction
 from app.schemas.doctor import (
     DoctorProfileCreate, DoctorProfileUpdate, DoctorProfileResponse, DoctorScheduleCreate,
     DoctorScheduleResponse, DoctorLeaveCreate, DoctorLeaveResponse, AvailableSlotsResponse,
@@ -786,6 +786,7 @@ async def update_leave_status(
     leave_id: uuid.UUID,
     payload: LeaveStatusUpdate,
     tenant: TenantContext = Depends(require_roles([ClinicRole.CLINIC_ADMIN, SystemRole.SUPER_ADMIN])),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Super Admin one-click Approve or Reject for doctor leave requests."""
@@ -828,6 +829,21 @@ async def update_leave_status(
             doc_name = f"Dr. {leave.doctor.staff.user.first_name} {leave.doctor.staff.user.last_name}"
             if not avatar:
                 avatar = leave.doctor.staff.user.avatar_url
+
+    # Audit Logging
+    try:
+        await log_audit_event(
+            db=db,
+            action=AuditAction.UPDATE,
+            action_title=f"{norm_status.capitalize()} Doctor Leave",
+            resource_type="Doctor Leaves",
+            resource_id=str(leave.id),
+            clinic_id=tenant.clinic_id if tenant else None,
+            user=current_user,
+            details=f"Admin {norm_status.lower()} leave request for {doc_name} from {leave.start_date} to {leave.end_date} (Reason: {leave.reason or 'Unspecified'})",
+        )
+    except Exception as e:
+        print(f"[Audit Log Warning] {e}")
 
     total_days = (leave.end_date - leave.start_date).days + 1
     return DoctorLeaveResponse(

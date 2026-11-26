@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -21,7 +21,10 @@ import {
   Bed,
   ShieldCheck,
   HeartPulse,
+  UserCog,
+  Pin,
   X,
+  FlaskConical,
 } from "lucide-react";
 
 interface NavItem {
@@ -33,10 +36,16 @@ interface NavItem {
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const { currentRole } = useAuth();
-  const { isOpen, close } = useSidebar();
-  const { settings, isLoading } = useBranding();
+  const { isOpen, close, isPinned, togglePin } = useSidebar();
+  const { settings } = useBranding();
 
-  // Close sidebar drawer on route change
+  // Desktop hover state for mini-rail expand
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Expanded on desktop if hovered or locked/pinned; always full width when mobile drawer is open
+  const isExpanded = isHovered || isPinned;
+
+  // Close mobile drawer on route change
   useEffect(() => {
     close();
   }, [pathname]);
@@ -51,10 +60,12 @@ export const Sidebar: React.FC = () => {
       { label: "Patients", href: "/dashboard/patients", icon: UserPlus },
       { label: "Appointments", href: "/dashboard/appointments", icon: Calendar },
       { label: "Live Queue", href: "/dashboard/receptionist", icon: Clock },
+      { label: "Lab Facilities (Tests)", href: "/dashboard/admin/lab-tests", icon: FlaskConical },
       { label: "Hospital Units (Bed/Cabin/ICU/CCU)", href: "/dashboard/units", icon: Bed },
       { label: "Billing & Invoices", href: "/dashboard/billing", icon: CreditCard },
       { label: "Website & Logo CMS", href: "/admin/website-settings", icon: Settings },
       { label: "Clinic Profile", href: "/dashboard/settings", icon: Building2 },
+      { label: "Admin Profile", href: "/dashboard/admin/profile", icon: UserCog },
       { label: "Audit Logs", href: "/dashboard/admin/audit", icon: ShieldCheck },
     ];
   } else if (currentRole === "DOCTOR") {
@@ -96,43 +107,63 @@ export const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile Drawer Backdrop Overlay */}
+      {/* Mobile Drawer Backdrop Overlay (< lg) */}
       {isOpen && (
         <div
           onClick={close}
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden transition-opacity duration-200"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden transition-opacity duration-200"
           aria-hidden="true"
         />
       )}
 
-      {/* Sidebar: Fixed slide-out drawer on mobile / static sidebar on lg+ */}
+      {/* Sidebar: Fixed slide-out drawer on mobile (< lg) / Hover-to-expand Mini-Rail on Desktop (lg+) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-100 flex flex-col min-h-screen border-r border-slate-800 transition-transform duration-200 ease-in-out shrink-0 lg:static lg:translate-x-0 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`fixed inset-y-0 left-0 z-40 bg-slate-900 text-slate-100 flex flex-col min-h-screen border-r border-slate-800 transition-all duration-200 ease-out shrink-0 select-none ${isOpen ? "translate-x-0 w-64 shadow-2xl" : "-translate-x-full"
+          } lg:translate-x-0 ${isExpanded ? "lg:w-64 lg:shadow-2xl" : "lg:w-[72px]"
+          }`}
       >
-        <div className="h-14 sm:h-16 flex items-center justify-between px-5 sm:px-6 border-b border-slate-800 shrink-0">
-          <Link href="/" className="flex items-center gap-3 min-w-0 hover:opacity-90 transition">
+        {/* Top Branding Header */}
+        <div
+          className={`h-14 sm:h-16 flex items-center border-b border-slate-800 shrink-0 px-3.5 transition-all duration-200 ${isExpanded ? "justify-between" : "lg:justify-center justify-between"
+            }`}
+        >
+          <Link
+            href="/"
+            className={`flex items-center gap-3 min-w-0 hover:opacity-90 transition ${isExpanded ? "w-auto" : "lg:justify-center"
+              }`}
+            title={settings?.hospital_name || "Mir Health"}
+          >
             {settings?.logo_url ? (
               <img
                 src={settings.logo_url}
                 alt={settings?.hospital_name || "Logo"}
-                className="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5 border border-slate-700 shrink-0"
+                className="w-9 h-9 rounded-xl object-contain bg-white/10 p-1 border border-slate-700 shrink-0"
               />
             ) : (
-              <div className="bg-emerald-600 p-2 rounded-xl text-white shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-[var(--brand-primary)] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Stethoscope className="w-5 h-5" />
               </div>
             )}
-            <div className="min-w-0">
-              <span className="font-bold text-base sm:text-lg tracking-tight truncate block max-w-[140px]">
+
+            {/* Hospital Name & Tagline: Hidden on collapsed rail, smoothly visible on expanded */}
+            <div
+              className={`min-w-0 transition-all duration-200 ${isExpanded
+                ? "opacity-100 max-w-[145px]"
+                : "opacity-0 w-0 max-w-0 overflow-hidden lg:hidden"
+                }`}
+            >
+              <span className="font-bold text-sm sm:text-base text-white tracking-tight truncate block whitespace-nowrap">
                 {settings?.hospital_name || "Mir Health"}
               </span>
-              <span className="text-[10px] sm:text-xs block text-slate-400 font-mono truncate max-w-[140px]">
+              <span className="text-[10px] block text-slate-400 font-sans truncate whitespace-nowrap">
                 {settings?.tagline || "Hospital SaaS"}
               </span>
             </div>
           </Link>
+
+          {/* Mobile close button (< lg) */}
           <button
             type="button"
             onClick={close}
@@ -141,32 +172,78 @@ export const Sidebar: React.FC = () => {
           >
             <X className="w-5 h-5" />
           </button>
+
+          {/* Desktop Pin Toggle Button (visible when expanded on lg+) */}
+          {isExpanded && (
+            <button
+              type="button"
+              onClick={togglePin}
+              title={isPinned ? "Unpin sidebar (collapse to hover-rail)" : "Pin sidebar open"}
+              className="hidden lg:flex p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition items-center justify-center"
+              aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+            >
+              <Pin
+                className={`w-4 h-4 transition-transform ${isPinned ? "text-emerald-400 rotate-45" : "text-slate-400"
+                  }`}
+              />
+            </button>
+          )}
         </div>
 
-        <nav className="flex-1 px-3 sm:px-4 py-4 sm:py-6 space-y-1 overflow-y-auto">
+        {/* Navigation Items List */}
+        <nav className="flex-1 px-2.5 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/dashboard" &&
+                item.href !== "/dashboard/admin" &&
+                pathname.startsWith(item.href + "/"));
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={close}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors min-h-[42px] ${
-                  isActive
-                    ? "bg-emerald-600 text-white shadow-xs font-semibold"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
+                title={!isExpanded ? item.label : undefined}
+                className={`group relative flex items-center rounded-xl transition-all duration-200 min-h-[42px] ${isExpanded
+                  ? "px-3.5 py-2.5 gap-3 w-full justify-start"
+                  : "lg:w-11 lg:h-11 lg:p-0 lg:justify-center lg:mx-auto px-3.5 py-2.5 gap-3 w-full justify-start"
+                  } ${isActive
+                    ? "bg-[var(--brand-primary)] text-white shadow-sm font-semibold"
+                    : "text-slate-300 hover:bg-slate-800/80 hover:text-white font-medium"
+                  }`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
+                {/* Crisp centered 20px Lucide icon */}
+                <Icon className="w-5 h-5 shrink-0 transition-transform group-hover:scale-105" />
+
+                {/* Text Label: Hidden on collapsed rail, smoothly visible on expanded */}
+                <span
+                  className={`text-sm whitespace-nowrap truncate transition-all duration-200 ${isExpanded
+                    ? "opacity-100 max-w-[180px]"
+                    : "opacity-0 w-0 max-w-0 overflow-hidden lg:hidden"
+                    }`}
+                >
+                  {item.label}
+                </span>
+
+                {/* Sleek Tooltip Preview when Rail is Collapsed */}
+                {!isExpanded && (
+                  <div className="hidden lg:group-hover:flex absolute left-full ml-3 px-2.5 py-1 bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl whitespace-nowrap pointer-events-none z-50 border border-slate-700 animate-in fade-in duration-150">
+                    {item.label}
+                  </div>
+                )}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-800 text-xs text-slate-400 text-center shrink-0">
-          Doctor & Clinic Management Platform
+        {/* Bottom Platform Tagline */}
+        <div
+          className={`p-3 border-t border-slate-800 text-[11px] font-medium text-slate-400 text-center shrink-0 transition-all duration-200 ${isExpanded ? "opacity-100" : "lg:opacity-0 lg:h-0 lg:p-0 lg:overflow-hidden opacity-100"
+            }`}
+        >
+          <span className="whitespace-nowrap">Doctor & Clinic Platform</span>
         </div>
       </aside>
     </>

@@ -158,7 +158,7 @@ export function CredentialsModal({
                   {target.role}
                 </span>
                 {target.identifier && (
-                  <span className="text-[10px] font-mono text-slate-400">
+                  <span className="text-[10px] font-sans text-slate-500 tabular-nums">
                     ({target.identifier})
                   </span>
                 )}
@@ -207,7 +207,7 @@ export function CredentialsModal({
                 className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-mono placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
               />
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">
+            <p className="text-[11px] text-slate-600 mt-1">
               Primary email used for portal authentication and verification.
             </p>
           </div>
@@ -266,13 +266,13 @@ export function CredentialsModal({
                 </button>
               </div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">
+            <p className="text-[11px] text-slate-600 mt-1">
               Leave blank to keep current password. Minimum 6 characters if updating.
             </p>
           </div>
 
           {/* Audit Notice */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5 text-[11px] text-slate-500">
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5 text-[11px] text-slate-600">
             <ShieldAlert className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
             <span>
               All credential modifications are encrypted, logged into the tamper-evident

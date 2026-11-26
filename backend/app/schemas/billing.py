@@ -118,6 +118,9 @@ class InvoiceResponse(BaseModel):
     doctor_specialty: Optional[str] = None
     chamber_location: Optional[str] = None
     unit_code: Optional[str] = None
+    nurse_booking_id: Optional[uuid.UUID] = None
+    has_reviewed: bool = False
+    submitted_rating: Optional[int] = None
     line_items: List[LineItemBreakdown] = []
 
     class Config:

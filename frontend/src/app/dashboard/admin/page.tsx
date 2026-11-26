@@ -202,11 +202,11 @@ export default function AdminDashboard() {
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100 font-bold">
               <Building2 className="w-5 h-5 text-emerald-600" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
               {clinic?.name || "Hospital"} Command Center
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-sm text-slate-600 mt-0.5">
             Real-time executive control over registered patients, doctor schedules, ward beds, and hospital revenue.
           </p>
         </div>
@@ -227,14 +227,14 @@ export default function AdminDashboard() {
           className="bg-white p-5 rounded-xl border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-700 transition">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 group-hover:text-slate-700 transition">
               Total Patients
             </span>
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60 group-hover:bg-emerald-600 group-hover:text-white transition">
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums">
             {summaryData?.clinical_operations?.total_registered_patients ?? 0}
           </div>
           <div className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
@@ -249,14 +249,14 @@ export default function AdminDashboard() {
           className="bg-white p-5 rounded-xl border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-700 transition">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 group-hover:text-slate-700 transition">
               Total Appointments
             </span>
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60 group-hover:bg-emerald-600 group-hover:text-white transition">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums">
             {summaryData?.appointments?.total ?? appointments.length}
           </div>
           <div className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
@@ -271,14 +271,14 @@ export default function AdminDashboard() {
           className="bg-white p-5 rounded-xl border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-700 transition">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 group-hover:text-slate-700 transition">
               Active Doctors
             </span>
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60 group-hover:bg-emerald-600 group-hover:text-white transition">
               <Stethoscope className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums">
             {summaryData?.clinical_operations?.active_doctors ?? doctors.length}
           </div>
           <div className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
@@ -293,14 +293,14 @@ export default function AdminDashboard() {
           className="bg-white p-5 rounded-xl border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-700 transition">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 group-hover:text-slate-700 transition">
               Gross Revenue (BDT)
             </span>
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base border border-emerald-100/60 group-hover:bg-emerald-600 group-hover:text-white transition">
               <span>৳</span>
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2 font-mono">
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums">
             ৳{totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
@@ -325,7 +325,7 @@ export default function AdminDashboard() {
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Recent Activity
                   </h3>
-                  <p className="text-[11px] text-slate-400">Live operational events</p>
+                  <p className="text-xs text-slate-500">Live operational events</p>
                 </div>
               </div>
 
@@ -410,7 +410,7 @@ export default function AdminDashboard() {
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Live Ward Bed Monitor
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-xs text-slate-500">
                     Real-time occupancy for ICU, CCU, Private Cabins & General Beds
                   </p>
                 </div>
@@ -589,7 +589,7 @@ export default function AdminDashboard() {
         <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className="min-w-[700px] w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
+              <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-600 whitespace-nowrap">
                 <th className="pb-3 px-4 whitespace-nowrap sticky left-0 bg-white z-10 shadow-xs">Doctor</th>
                 <th className="pb-3 px-4 whitespace-nowrap">Specialization</th>
                 <th className="pb-3 px-4 whitespace-nowrap">Consult Fee</th>

@@ -13,10 +13,10 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # Security & Tokens
-    SECRET_KEY: str = "replace-this-super-secret-key-in-production-min-32-chars-long"
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "doctorms-super-secret-production-and-development-jwt-key-32chars")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours for dev convenience
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days (10080 minutes) so sessions persist across shifts
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30  # 30 days
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./doctorms_dev.db"

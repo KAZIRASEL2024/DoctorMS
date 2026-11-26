@@ -10,11 +10,22 @@ from app.api.v1.emr import router as emr_router
 from app.api.v1.prescriptions import router as prescriptions_router
 from app.api.v1.billing import router as billing_router, invoices_router, reception_router
 from app.api.v1.analytics import router as analytics_router, admin_analytics_router
-from app.api.v1.settings import router as settings_router, get_public_website_settings
+from app.api.v1.settings import router as settings_router, get_public_website_settings, update_website_settings
 from app.schemas.settings import WebsiteSettingsResponse
 from app.api.v1.units import router as units_router
-from app.api.v1.users import router as admin_users_router, admin_patients_credentials_router
+from app.api.v1.users import (
+    router as admin_users_router,
+    admin_patients_credentials_router,
+    users_me_router,
+    admin_audit_router,
+)
 from app.api.v1.nurses import router as nurses_router
+from app.api.v1.lab_reports import router as lab_reports_router, list_lab_reports
+from app.api.v1.lab_tests import (
+    public_router as public_lab_tests_router,
+    admin_router as admin_lab_tests_router,
+    patient_reports_router,
+)
 
 api_v1_router = APIRouter()
 
@@ -33,8 +44,16 @@ api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(admin_analytics_router)
 api_v1_router.include_router(settings_router)
 api_v1_router.add_api_route("/cms", get_public_website_settings, methods=["GET"], response_model=WebsiteSettingsResponse, tags=["Website Settings & CMS"])
+api_v1_router.add_api_route("/cms", update_website_settings, methods=["PUT"], response_model=WebsiteSettingsResponse, tags=["Website Settings & CMS"])
 api_v1_router.include_router(units_router)
 api_v1_router.include_router(admin_leaves_router)
 api_v1_router.include_router(admin_users_router)
 api_v1_router.include_router(admin_patients_credentials_router)
+api_v1_router.include_router(users_me_router)
+api_v1_router.include_router(admin_audit_router)
 api_v1_router.include_router(nurses_router)
+api_v1_router.include_router(lab_reports_router)
+api_v1_router.include_router(public_lab_tests_router)
+api_v1_router.include_router(admin_lab_tests_router)
+api_v1_router.include_router(patient_reports_router)
+api_v1_router.add_api_route("/patient/me/lab-reports", list_lab_reports, methods=["GET"], tags=["Lab Reports"])

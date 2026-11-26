@@ -61,3 +61,11 @@ class WebsiteSettings(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     logo_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     hero_image_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     favicon_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # 5-Token Dynamic Theme & Palette Configuration
+    theme_preset: Mapped[str] = mapped_column(String(50), default="signature-green", nullable=False)
+    primary_color: Mapped[str] = mapped_column(String(20), default="#059669", nullable=False)
+    button_color: Mapped[str] = mapped_column(String(20), default="#047857", nullable=False)
+    tint_color: Mapped[str] = mapped_column(String(20), default="#ECFDF5", nullable=False)
+    background_color: Mapped[str] = mapped_column(String(20), default="#FFFFFF", nullable=False)
+    text_color: Mapped[str] = mapped_column(String(20), default="#0F172A", nullable=False)
